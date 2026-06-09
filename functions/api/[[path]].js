@@ -1,4 +1,4 @@
-const VPS_URL = 'https://flashers-zus-was-chelsea.trycloudflare.com';
+const VPS_URL = 'https://helicopter-usual-guided-still.trycloudflare.com';
 
 export async function onRequest(context) {
   const vps = context.env.VPS_URL || VPS_URL;

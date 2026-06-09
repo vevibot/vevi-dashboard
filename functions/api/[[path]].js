@@ -4,10 +4,13 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const target = VPS + url.pathname.replace(/^\/api/, '') + url.search;
 
-  const init = {
-    method: context.request.method,
-    headers: Object.fromEntries(context.request.headers),
-  };
+  // Strip Host header — forwarding the Pages domain to a bare IP causes CF error 1003
+  const headers = {};
+  for (const [k, v] of context.request.headers) {
+    if (k.toLowerCase() !== 'host') headers[k] = v;
+  }
+
+  const init = { method: context.request.method, headers };
   if (!['GET', 'HEAD'].includes(context.request.method)) {
     init.body = context.request.body;
   }

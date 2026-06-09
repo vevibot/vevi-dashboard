@@ -11,10 +11,11 @@ function toTvSymbol(symbol: string, exchange: string): string {
 interface Props {
   symbol: string;
   exchange: string;
-  height?: number;
+  height?: number | string;
+  allowSymbolChange?: boolean;
 }
 
-export function TradingViewChart({ symbol, exchange, height = 420 }: Props) {
+export function TradingViewChart({ symbol, exchange, height = 420, allowSymbolChange = false }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,18 +42,19 @@ export function TradingViewChart({ symbol, exchange, height = 420 }: Props) {
       gridColor: 'rgba(148,163,184,0.06)',
       withdateranges: true,
       hide_side_toolbar: false,
-      allow_symbol_change: false,
+      allow_symbol_change: allowSymbolChange,
       save_image: false,
       calendar: false,
+      show_popup_button: true,
       support_host: 'https://www.tradingview.com',
     });
     ref.current.appendChild(script);
-  }, [symbol, exchange]);
+  }, [symbol, exchange, allowSymbolChange]);
 
   return (
     <div
       ref={ref}
-      className="tradingview-widget-container w-full rounded-xl overflow-hidden"
+      className="tradingview-widget-container w-full h-full rounded-xl overflow-hidden"
       style={{ height }}
     />
   );

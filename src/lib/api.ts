@@ -47,6 +47,8 @@ export const activateAccount = (id: string)          => req(`/accounts/${id}/act
 export const deleteAccount   = (id: string)          => req(`/accounts/${id}`, { method: 'DELETE' });
 export const addAccount      = (body: AddAccountBody) =>
   req<Account>('/accounts', { method: 'POST', body: JSON.stringify(body) });
+export const updateAccount   = (id: string, body: Partial<AddAccountBody>) =>
+  req<Account>(`/accounts/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export const getOverview    = ()            => req<OverviewResponse>('/dashboard/overview');

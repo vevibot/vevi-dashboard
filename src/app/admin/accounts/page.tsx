@@ -2,13 +2,13 @@
 import { useEffect, useState } from 'react';
 import {
   getAccounts, getAccountSnap, pauseAccount, activateAccount, deleteAccount,
-  addAccount, Account, AccountSnapshot, OpenPosition,
+  addAccount, updateAccount, Account, AccountSnapshot, OpenPosition,
 } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { PositionCard } from '@/components/ui/PositionCard';
 import { TradeModal }   from '@/components/TradeModal';
-import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight } from 'lucide-react';
+import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight, Pencil } from 'lucide-react';
 
 function exchangeFromSymbol(sym: string): string {
   return sym.includes('USDC') ? 'hyperliquid' : 'bingx';
@@ -18,6 +18,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts]       = useState<Account[]>([]);
   const [selected, setSelected]       = useState<AccountSnapshot | null>(null);
   const [showAdd,  setShowAdd]        = useState(false);
+  const [editAcc,  setEditAcc]        = useState<Account | null>(null);
   const [loading,  setLoading]        = useState(false);
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
 
@@ -103,6 +104,10 @@ export default function AccountsPage() {
                         <PlayCircle size={16} />
                       </button>
                     )}
+                    <button onClick={() => setEditAcc(acc)} title="Edit"
+                      className="text-muted hover:text-green transition-colors cursor-pointer">
+                      <Pencil size={16} />
+                    </button>
                     <button onClick={() => handleDelete(acc.id)} title="Delete"
                       className="text-muted hover:text-red transition-colors cursor-pointer">
                       <Trash2 size={16} />
@@ -131,6 +136,11 @@ export default function AccountsPage() {
       {/* Add account modal */}
       {showAdd && (
         <AddAccountModal onClose={() => { setShowAdd(false); reload(); }} />
+      )}
+
+      {/* Edit account modal */}
+      {editAcc && (
+        <EditAccountModal account={editAcc} onClose={() => { setEditAcc(null); reload(); }} />
       )}
     </div>
   );
@@ -296,6 +306,108 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
             <button type="submit" disabled={loading}
               className="flex-1 bg-green text-bg py-2.5 rounded-lg font-sans font-semibold text-sm hover:bg-green/90 disabled:opacity-50 cursor-pointer transition-colors">
               {loading ? 'Adding…' : 'Add Account'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditAccountModal({ account, onClose }: { account: Account; onClose: () => void }) {
+  const [form, setForm] = useState({
+    name: account.name,
+    email: account.email,
+    exchange: account.exchange,
+    api_key: '',
+    api_secret: '',
+    member_password: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      const body: Record<string, string> = { name: form.name, email: form.email, exchange: form.exchange };
+      if (form.api_key)        body.api_key        = form.api_key;
+      if (form.api_secret)     body.api_secret     = form.api_secret;
+      if (form.member_password) body.member_password = form.member_password;
+      await updateAccount(account.id, body);
+      onClose();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const inp = 'w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text text-sm placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20 transition-colors duration-150';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-bg/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-surface border border-border rounded-2xl w-full max-w-md p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-text font-sans font-semibold">Edit Account</h2>
+          <button onClick={onClose} className="text-muted hover:text-text cursor-pointer"><X size={18} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-muted text-xs mb-1.5">Member Name</label>
+            <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className={inp} />
+          </div>
+          <div>
+            <label className="block text-muted text-xs mb-1.5">Email</label>
+            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className={inp} />
+          </div>
+
+          <div>
+            <label className="block text-muted text-xs mb-1.5">Exchange</label>
+            <div className="flex gap-2">
+              {(['bingx', 'hyperliquid'] as const).map(ex => (
+                <button key={ex} type="button" onClick={() => setForm({...form, exchange: ex})}
+                  className={`flex-1 py-2 rounded-lg text-sm font-sans transition-colors cursor-pointer border ${
+                    form.exchange === ex ? 'bg-green/10 border-green/50 text-green font-medium' : 'bg-elevated border-border text-muted hover:text-text'
+                  }`}>
+                  {ex === 'bingx' ? 'BingX' : 'Hyperliquid'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-muted text-xs mb-1.5">
+              {form.exchange === 'hyperliquid' ? 'Wallet Address' : 'API Key'} <span className="text-muted/50">(leave blank to keep current)</span>
+            </label>
+            <input type="text" value={form.api_key} onChange={e => setForm({...form, api_key: e.target.value})}
+              placeholder="New key…" className={inp} />
+          </div>
+          <div>
+            <label className="block text-muted text-xs mb-1.5">
+              {form.exchange === 'hyperliquid' ? 'Private Key' : 'API Secret'} <span className="text-muted/50">(leave blank to keep current)</span>
+            </label>
+            <input type="password" value={form.api_secret} onChange={e => setForm({...form, api_secret: e.target.value})}
+              placeholder="New secret…" className={inp} />
+          </div>
+          <div>
+            <label className="block text-muted text-xs mb-1.5">Member Login Password <span className="text-muted/50">(leave blank to keep current)</span></label>
+            <input type="password" value={form.member_password} onChange={e => setForm({...form, member_password: e.target.value})}
+              placeholder="New password…" className={inp} />
+          </div>
+
+          {error && <p className="text-red text-sm bg-red/5 border border-red/20 rounded-lg px-3 py-2">{error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 border border-border text-muted py-2.5 rounded-lg font-sans text-sm hover:bg-elevated cursor-pointer transition-colors">
+              Cancel
+            </button>
+            <button type="submit" disabled={loading}
+              className="flex-1 bg-green text-bg py-2.5 rounded-lg font-sans font-semibold text-sm hover:bg-green/90 disabled:opacity-50 cursor-pointer transition-colors">
+              {loading ? 'Saving…' : 'Save Changes'}
             </button>
           </div>
         </form>

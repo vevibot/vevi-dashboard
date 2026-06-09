@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, Settings, LogOut,
-  TrendingUp, ListOrdered,
+  TrendingUp, ListOrdered, BarChart2,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -13,12 +13,14 @@ interface NavItem { href: string; label: string; icon: React.ReactNode; }
 const adminNav: NavItem[] = [
   { href: '/admin',          label: 'Overview',  icon: <LayoutDashboard size={16} /> },
   { href: '/admin/accounts', label: 'Accounts',  icon: <Users size={16} /> },
+  { href: '/admin/charts',   label: 'Charts',    icon: <BarChart2 size={16} /> },
   { href: '/admin/settings', label: 'Settings',  icon: <Settings size={16} /> },
 ];
 
 const memberNav: NavItem[] = [
-  { href: '/member',        label: 'Dashboard', icon: <TrendingUp size={16} /> },
-  { href: '/member/trades', label: 'Trades',    icon: <ListOrdered size={16} /> },
+  { href: '/member',         label: 'Dashboard', icon: <TrendingUp size={16} /> },
+  { href: '/member/trades',  label: 'Trades',    icon: <ListOrdered size={16} /> },
+  { href: '/member/charts',  label: 'Charts',    icon: <BarChart2 size={16} /> },
 ];
 
 interface Props { role: 'admin' | 'member'; }
@@ -40,12 +42,17 @@ export function Sidebar({ role }: Props) {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border">
         <div className="flex items-center gap-2">
-          <Image src="/vevi-logo.svg" alt="Vevi" width={100} height={27} priority />
-          {role === 'admin' && (
-            <span className="text-[10px] bg-green/10 text-green border border-green/30 rounded px-1.5 py-0.5 font-mono ml-auto">
-              ADMIN
-            </span>
-          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <Image src="/vevi-logo.svg" alt="Vevi" width={100} height={27} priority />
+              {role === 'admin' && (
+                <span className="text-[10px] bg-green/10 text-green border border-green/30 rounded px-1.5 py-0.5 font-mono ml-auto">
+                  ADMIN
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-muted/50 font-sans mt-1 tracking-wide">algorithmic edge</p>
+          </div>
         </div>
       </div>
 

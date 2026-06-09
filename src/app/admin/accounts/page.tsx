@@ -238,8 +238,41 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
           {[
             { label: 'Member Name', key: 'name' as const, type: 'text', placeholder: 'John Doe' },
             { label: 'Email',       key: 'email' as const, type: 'email', placeholder: 'john@example.com' },
-            { label: 'BingX API Key',    key: 'api_key' as const,    type: 'text', placeholder: 'API key from BingX' },
-            { label: 'BingX API Secret', key: 'api_secret' as const, type: 'password', placeholder: 'API secret' },
+          ].map(({ label, key, type, placeholder }) => (
+            <div key={key}>
+              <label className="block text-muted text-xs mb-1.5">{label}</label>
+              <input
+                type={type} placeholder={placeholder} {...field(key)}
+                className="w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text text-sm
+                           placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20
+                           transition-colors duration-150"
+              />
+            </div>
+          ))}
+
+          {/* Exchange selector */}
+          <div>
+            <label className="block text-muted text-xs mb-1.5">Exchange</label>
+            <div className="flex gap-2">
+              {(['bingx', 'hyperliquid'] as const).map(ex => (
+                <button
+                  key={ex} type="button"
+                  onClick={() => setForm({ ...form, exchange: ex })}
+                  className={`flex-1 py-2 rounded-lg text-sm font-sans transition-colors cursor-pointer border ${
+                    form.exchange === ex
+                      ? 'bg-green/10 border-green/50 text-green font-medium'
+                      : 'bg-elevated border-border text-muted hover:text-text'
+                  }`}
+                >
+                  {ex === 'bingx' ? 'BingX' : 'Hyperliquid'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {[
+            { label: `${form.exchange === 'hyperliquid' ? 'Wallet Address' : 'API Key'}`,    key: 'api_key' as const,    type: 'text',     placeholder: form.exchange === 'hyperliquid' ? '0x...' : 'API key' },
+            { label: `${form.exchange === 'hyperliquid' ? 'Private Key'    : 'API Secret'}`, key: 'api_secret' as const, type: 'password', placeholder: form.exchange === 'hyperliquid' ? 'Private key' : 'API secret' },
             { label: 'Member Login Password (optional)', key: 'member_password' as const, type: 'password', placeholder: 'Dashboard login password' },
           ].map(({ label, key, type, placeholder }) => (
             <div key={key}>

@@ -1,5 +1,15 @@
 const BASE = '/api';
 
+export function getRole(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('vevi_role') || '';
+}
+
+export function canTrade(): boolean {
+  const r = getRole();
+  return r === 'admin' || r === 'trader';
+}
+
 function token(): string {
   if (typeof window === 'undefined') return '';
   return localStorage.getItem('vevi_token') || '';
@@ -48,6 +58,18 @@ export const getMyTrades    = async (limit = 50) => {
   const snap = await getMyDashboard();
   return getTrades(snap.account_id, limit);
 };
+
+// ── Trading (trader/admin only) ───────────────────────────────────────────────
+interface OrderBase { account_id: string; symbol: string; leverage?: number; sl?: number; tp?: number; }
+export interface MarketOrderBody extends OrderBase { side: 'buy'|'sell'; usdt_amount: number; }
+export interface LimitOrderBody  extends OrderBase { side: 'buy'|'sell'; usdt_amount: number; price: number; }
+export interface CloseBody   { account_id: string; symbol: string; }
+export interface ModifyBody  { account_id: string; symbol: string; sl?: number; tp?: number; }
+
+export const placeMarket   = (b: MarketOrderBody)  => req<any>('/trading/market',  { method: 'POST', body: JSON.stringify(b) });
+export const placeLimit    = (b: LimitOrderBody)   => req<any>('/trading/limit',   { method: 'POST', body: JSON.stringify(b) });
+export const closePosition = (b: CloseBody)        => req<any>('/trading/close',   { method: 'POST', body: JSON.stringify(b) });
+export const modifySlTp    = (b: ModifyBody)       => req<any>('/trading/sl-tp',   { method: 'PUT',  body: JSON.stringify(b) });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface Account {

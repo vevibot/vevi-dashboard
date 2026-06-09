@@ -7,13 +7,19 @@ import {
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { PositionCard } from '@/components/ui/PositionCard';
+import { TradeModal }   from '@/components/TradeModal';
 import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight } from 'lucide-react';
 
+function exchangeFromSymbol(sym: string): string {
+  return sym.includes('USDC') ? 'hyperliquid' : 'bingx';
+}
+
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [selected, setSelected] = useState<AccountSnapshot | null>(null);
-  const [showAdd,  setShowAdd]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
+  const [accounts, setAccounts]       = useState<Account[]>([]);
+  const [selected, setSelected]       = useState<AccountSnapshot | null>(null);
+  const [showAdd,  setShowAdd]        = useState(false);
+  const [loading,  setLoading]        = useState(false);
+  const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
 
   const reload = () => getAccounts().then(setAccounts);
   useEffect(() => { reload(); }, []);
@@ -168,7 +174,7 @@ function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () =
             {snap.open_positions.length > 0 ? (
               <div className="space-y-3">
                 {snap.open_positions.map((p) => (
-                  <PositionCard key={p.symbol} position={p} />
+                  <PositionCard key={p.symbol} position={p} onTrade={setTradeSymbol} />
                 ))}
               </div>
             ) : (
@@ -177,6 +183,17 @@ function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () =
           </div>
         </div>
       </div>
+
+      {tradeSymbol && selected && (
+        <TradeModal
+          accountId={selected.account_id}
+          symbol={tradeSymbol}
+          exchange={exchangeFromSymbol(tradeSymbol)}
+          canTrade={true}
+          onClose={() => setTradeSymbol(null)}
+          onDone={() => getAccountSnap(selected.account_id).then(setSelected)}
+        />
+      )}
     </div>
   );
 }

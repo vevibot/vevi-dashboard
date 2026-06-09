@@ -1,17 +1,23 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getMyDashboard, getTrades, AccountSnapshot, Trade } from '@/lib/api';
+import { getMyDashboard, getTrades, AccountSnapshot, Trade, canTrade } from '@/lib/api';
 import { fmtPnl } from '@/lib/utils';
 import { MetricCard }    from '@/components/ui/MetricCard';
 import { PositionCard }  from '@/components/ui/PositionCard';
 import { EquityChart }   from '@/components/charts/EquityChart';
 import { DailyPnlBars }  from '@/components/charts/DailyPnlBars';
+import { TradeModal }    from '@/components/TradeModal';
 import { TrendingUp, Layers, Calendar } from 'lucide-react';
 
+function exchangeFromSymbol(sym: string): string {
+  return sym.includes('USDC') ? 'hyperliquid' : 'bingx';
+}
+
 export default function MemberDashboard() {
-  const [data, setData]     = useState<AccountSnapshot | null>(null);
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [error, setError]   = useState('');
+  const [data, setData]         = useState<AccountSnapshot | null>(null);
+  const [trades, setTrades]     = useState<Trade[]>([]);
+  const [error, setError]       = useState('');
+  const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
 
   useEffect(() => {
     getMyDashboard().then(setData).catch((e) => setError(e.message));
@@ -119,7 +125,7 @@ export default function MemberDashboard() {
         {data.open_positions.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {data.open_positions.map((pos) => (
-              <PositionCard key={pos.symbol} position={pos} />
+              <PositionCard key={pos.symbol} position={pos} onTrade={setTradeSymbol} />
             ))}
           </div>
         ) : (
@@ -129,6 +135,17 @@ export default function MemberDashboard() {
           </div>
         )}
       </div>
+
+      {tradeSymbol && (
+        <TradeModal
+          accountId={data.account_id}
+          symbol={tradeSymbol}
+          exchange={exchangeFromSymbol(tradeSymbol)}
+          canTrade={canTrade()}
+          onClose={() => setTradeSymbol(null)}
+          onDone={() => getMyDashboard().then(setData)}
+        />
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
+import { BarChart2 } from 'lucide-react';
 import { OpenPosition } from '@/lib/api';
 import { fmtPrice } from '@/lib/utils';
 import { Badge } from './Badge';
 
-interface Props { position: OpenPosition; }
+interface Props { position: OpenPosition; onTrade?: (symbol: string) => void; }
 
-export function PositionCard({ position: p }: Props) {
+export function PositionCard({ position: p, onTrade }: Props) {
   const side   = p.side === 'buy' ? 'long' : 'short';
   const pct    = p.trail_sl && p.peak && p.entry
     ? Math.min(100, Math.max(0, Math.abs((p.peak - p.entry) / p.entry) * 100))
@@ -49,6 +50,16 @@ export function PositionCard({ position: p }: Props) {
             />
           </div>
         </div>
+      )}
+
+      {onTrade && (
+        <button
+          onClick={() => onTrade(p.symbol)}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-sans text-muted hover:text-text hover:bg-elevated border border-border hover:border-slate-500 transition-colors cursor-pointer"
+        >
+          <BarChart2 size={13} />
+          Chart / Trade
+        </button>
       )}
     </div>
   );

@@ -1,8 +1,7 @@
-const VPS = 'http://104.196.126.212';
-
 export async function onRequest(context) {
+  const vps = context.env.VPS_URL;
   const url = new URL(context.request.url);
-  const target = VPS + url.pathname.replace(/^\/api/, '') + url.search;
+  const target = vps + url.pathname.replace(/^\/api/, '') + url.search;
 
   const headers = {};
   for (const [k, v] of context.request.headers) {

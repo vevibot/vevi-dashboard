@@ -1,10 +1,9 @@
-const VPS = 'http://104.196.126.212:8000';
+const VPS = 'http://104.196.126.212';
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const target = VPS + url.pathname.replace(/^\/api/, '') + url.search;
 
-  // Strip Host header — forwarding the Pages domain to a bare IP causes CF error 1003
   const headers = {};
   for (const [k, v] of context.request.headers) {
     if (k.toLowerCase() !== 'host') headers[k] = v;

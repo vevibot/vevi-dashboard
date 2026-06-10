@@ -5,7 +5,7 @@ import { fmtPnl } from '@/lib/utils';
 import { MetricCard }       from '@/components/ui/MetricCard';
 import { AccountPnlBars }   from '@/components/charts/AccountPnlBars';
 import { TradingDataPanel } from '@/components/TradingDataPanel';
-import { Users, Activity, TrendingUp, Layers, ChevronDown } from 'lucide-react';
+import { Users, Activity, TrendingUp, Layers, ChevronDown, Wallet } from 'lucide-react';
 
 export default function AdminOverview() {
   const [data, setData]         = useState<OverviewResponse | null>(null);
@@ -37,9 +37,15 @@ export default function AdminOverview() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <MetricCard label="Total Accounts"  value={String(data.total_accounts)}  icon={<Users size={16} />} />
         <MetricCard label="Active Accounts" value={String(data.active_accounts)} icon={<Activity size={16} />} />
+        <MetricCard
+          label="Total Balance"
+          value={data.total_balance > 0 ? `$${data.total_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+          icon={<Wallet size={16} />}
+          sub="All accounts USDT"
+        />
         <MetricCard
           label="Daily P&L" value={fmtPnl(data.total_daily_pnl)}
           positive={pnlPositive} icon={<TrendingUp size={16} />}
@@ -69,7 +75,12 @@ export default function AdminOverview() {
                 <div className="w-2 h-2 rounded-full bg-green mt-1.5 animate-pulse flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-text font-medium text-sm truncate">{acc.name}</p>
-                  <div className="flex items-center gap-3 mt-1">
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
+                    {acc.balance > 0 && (
+                      <span className="font-mono text-xs text-text font-semibold">
+                        ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    )}
                     <span className={`font-mono text-xs font-semibold ${acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}`}>
                       {fmtPnl(acc.daily_pnl)}
                     </span>
@@ -95,7 +106,7 @@ export default function AdminOverview() {
           <table className="w-full text-sm font-sans">
             <thead>
               <tr className="border-b border-border">
-                {['Account', 'Status', 'Daily P&L', 'Open Pos', 'Trades Today'].map((h) => (
+                {['Account', 'Status', 'Balance', 'Daily P&L', 'Open Pos', 'Trades Today'].map((h) => (
                   <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
                 ))}
               </tr>
@@ -126,6 +137,9 @@ export default function AdminOverview() {
                           {acc.is_active ? 'Active' : 'Paused'}
                         </span>
                       </td>
+                      <td className="px-5 py-3.5 font-mono text-text">
+                        {acc.balance > 0 ? `$${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                      </td>
                       <td className="px-5 py-3.5 font-mono">
                         <span className={acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}>
                           {fmtPnl(acc.daily_pnl)}
@@ -136,7 +150,7 @@ export default function AdminOverview() {
                     </tr>
                     {isOpen && (
                       <tr key={`${acc.account_id}-panel`} className="border-b border-border/50 bg-elevated/20">
-                        <td colSpan={5} className="p-4">
+                        <td colSpan={6} className="p-4">
                           <TradingDataPanel
                             accountId={acc.account_id}
                             exchange={fullAcc?.exchange ?? 'bingx'}
@@ -152,7 +166,7 @@ export default function AdminOverview() {
               })}
               {data.accounts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-muted text-sm">
+                  <td colSpan={6} className="px-5 py-8 text-center text-muted text-sm">
                     No accounts yet — add one from the Accounts page.
                   </td>
                 </tr>

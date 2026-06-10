@@ -105,12 +105,13 @@ export interface OpenPosition {
 
 export interface AccountSnapshot {
   account_id: string; name: string; email: string; is_active: boolean;
-  daily_pnl: number; daily_trades: number;
+  balance: number; daily_pnl: number; daily_trades: number;
   open_positions: OpenPosition[]; open_count: number;
 }
 
 export interface OverviewResponse {
-  total_accounts: number; active_accounts: number; total_daily_pnl: number;
+  total_accounts: number; active_accounts: number;
+  total_daily_pnl: number; total_balance: number;
   accounts: AccountSnapshot[];
 }
 

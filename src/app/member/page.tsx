@@ -8,7 +8,7 @@ import { EquityChart }   from '@/components/charts/EquityChart';
 import { DailyPnlBars }  from '@/components/charts/DailyPnlBars';
 import { TradeModal }        from '@/components/TradeModal';
 import { TradingDataPanel }  from '@/components/TradingDataPanel';
-import { TrendingUp, Layers, Calendar } from 'lucide-react';
+import { TrendingUp, Layers, Calendar, Wallet } from 'lucide-react';
 
 function exchangeFromSymbol(sym: string): string {
   return sym.includes('USDC') ? 'hyperliquid' : 'bingx';
@@ -68,7 +68,12 @@ export default function MemberDashboard() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <MetricCard
+          label="Balance" value={data.balance > 0 ? `$${data.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+          icon={<Wallet size={16} />}
+          sub="USDT equity"
+        />
         <MetricCard
           label="Daily P&L" value={fmtPnl(data.daily_pnl)}
           positive={pnlPositive}

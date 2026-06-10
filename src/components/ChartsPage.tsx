@@ -4,11 +4,12 @@ import { TradingViewChart } from './TradingViewChart';
 
 const SYMBOLS = [
   { label: 'XRP',  bingx: 'XRP/USDT:USDT',   hl: 'XRP/USDC:USDC'  },
-  { label: 'ETH',  bingx: 'ETH/USDT:USDT',   hl: 'ETH/USDC:USDC'  },
   { label: 'LINK', bingx: 'LINK/USDT:USDT',  hl: 'LINK/USDC:USDC' },
   { label: 'SUI',  bingx: 'SUI/USDT:USDT',   hl: 'SUI/USDC:USDC'  },
   { label: 'HYPE', bingx: 'HYPE/USDT:USDT',  hl: 'HYPE/USDC:USDC' },
   { label: 'OP',   bingx: 'OP/USDT:USDT',    hl: 'OP/USDC:USDC'   },
+  { label: 'NEAR', bingx: 'NEAR/USDT:USDT',  hl: 'NEAR/USDC:USDC' },
+  { label: 'TIA',  bingx: 'TIA/USDT:USDT',   hl: 'TIA/USDC:USDC'  },
 ];
 
 export function ChartsPage() {

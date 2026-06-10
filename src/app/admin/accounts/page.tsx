@@ -160,7 +160,7 @@ export default function AccountsPage() {
   );
 }
 
-const TRADE_SYMBOLS = ['XRP', 'ETH', 'LINK', 'SUI', 'HYPE', 'OP', 'BTC', 'SOL'];
+const TRADE_SYMBOLS = ['XRP', 'LINK', 'SUI', 'HYPE', 'OP', 'NEAR', 'TIA'];
 
 function AccountDrawer({ snap, exchange, onClose, onTrade }: {
   snap: AccountSnapshot;

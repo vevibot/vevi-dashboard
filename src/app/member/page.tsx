@@ -6,7 +6,8 @@ import { MetricCard }    from '@/components/ui/MetricCard';
 import { PositionCard }  from '@/components/ui/PositionCard';
 import { EquityChart }   from '@/components/charts/EquityChart';
 import { DailyPnlBars }  from '@/components/charts/DailyPnlBars';
-import { TradeModal }    from '@/components/TradeModal';
+import { TradeModal }        from '@/components/TradeModal';
+import { TradingDataPanel }  from '@/components/TradingDataPanel';
 import { TrendingUp, Layers, Calendar } from 'lucide-react';
 
 function exchangeFromSymbol(sym: string): string {
@@ -134,6 +135,17 @@ export default function MemberDashboard() {
             <p className="text-muted font-sans text-sm">No open positions — bot is scanning for setups</p>
           </div>
         )}
+      </div>
+
+      {/* Trading data panel */}
+      <div className="mt-8">
+        <TradingDataPanel
+          accountId={data.account_id}
+          exchange={exchangeFromSymbol(data.open_positions[0]?.symbol ?? '')}
+          openPositions={data.open_positions}
+          canTrade={canTrade()}
+          onRefresh={() => getMyDashboard().then(setData)}
+        />
       </div>
 
       {tradeSymbol && (

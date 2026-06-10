@@ -53,6 +53,17 @@ export const updateAccount   = (id: string, body: Partial<AddAccountBody>) =>
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export const getActivity    = ()            => req<Record<string, Record<string, { status: string; bias: number; detail: string; updated_at: string }>>>('/dashboard/activity');
 export const getOverview    = ()            => req<OverviewResponse>('/dashboard/overview');
+
+// Exchange data (lazy-loaded per tab)
+export const getOpenOrders      = (id: string, sym?: string) => req<{orders: ExOrder[]}>(`/dashboard/accounts/${id}/open-orders${sym ? `?symbol=${encodeURIComponent(sym)}` : ''}`);
+export const getOrderHistory    = (id: string, sym?: string) => req<{orders: ExOrder[]}>(`/dashboard/accounts/${id}/order-history${sym ? `?symbol=${encodeURIComponent(sym)}` : ''}`);
+export const getPositionHistory = (id: string, sym?: string) => req<{trades: ExTrade[]}>(`/dashboard/accounts/${id}/position-history${sym ? `?symbol=${encodeURIComponent(sym)}` : ''}`);
+export const getTransactions    = (id: string)               => req<{transactions: ExTx[]}>(`/dashboard/accounts/${id}/transactions`);
+
+export const getMyOpenOrders      = (sym?: string) => req<{orders: ExOrder[]}>(`/dashboard/me/open-orders${sym ? `?symbol=${encodeURIComponent(sym)}` : ''}`);
+export const getMyOrderHistory    = (sym?: string) => req<{orders: ExOrder[]}>(`/dashboard/me/order-history${sym ? `?symbol=${encodeURIComponent(sym)}` : ''}`);
+export const getMyPositionHistory = (sym?: string) => req<{trades: ExTrade[]}>(`/dashboard/me/position-history${sym ? `?symbol=${encodeURIComponent(sym)}` : ''}`);
+export const getMyTransactions    = ()              => req<{transactions: ExTx[]}>('/dashboard/me/transactions');
 export const getMyDashboard = ()            => req<AccountSnapshot>('/dashboard/me');
 export const getAccountSnap = (id: string) => req<AccountSnapshot>(`/dashboard/accounts/${id}`);
 export const getTrades      = (id: string, limit = 50) =>
@@ -69,10 +80,11 @@ export interface LimitOrderBody  extends OrderBase { side: 'buy'|'sell'; usdt_am
 export interface CloseBody   { account_id: string; symbol: string; }
 export interface ModifyBody  { account_id: string; symbol: string; sl?: number; tp?: number; }
 
-export const placeMarket   = (b: MarketOrderBody)  => req<any>('/trading/market',  { method: 'POST', body: JSON.stringify(b) });
-export const placeLimit    = (b: LimitOrderBody)   => req<any>('/trading/limit',   { method: 'POST', body: JSON.stringify(b) });
-export const closePosition = (b: CloseBody)        => req<any>('/trading/close',   { method: 'POST', body: JSON.stringify(b) });
-export const modifySlTp    = (b: ModifyBody)       => req<any>('/trading/sl-tp',   { method: 'PUT',  body: JSON.stringify(b) });
+export const placeMarket   = (b: MarketOrderBody)  => req<any>('/trading/market',    { method: 'POST', body: JSON.stringify(b) });
+export const placeLimit    = (b: LimitOrderBody)   => req<any>('/trading/limit',     { method: 'POST', body: JSON.stringify(b) });
+export const closePosition = (b: CloseBody)        => req<any>('/trading/close',     { method: 'POST', body: JSON.stringify(b) });
+export const modifySlTp    = (b: ModifyBody)       => req<any>('/trading/sl-tp',     { method: 'PUT',  body: JSON.stringify(b) });
+export const closeAll      = (account_id: string)  => req<any>('/trading/close-all', { method: 'POST', body: JSON.stringify({ account_id, symbol: '' }) });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface Account {
@@ -106,4 +118,22 @@ export interface Trade {
   id: string; account_id: string; symbol: string; side: string;
   entry: number; exit_price: number | null; pnl: number | null;
   opened_at: string; closed_at: string | null; is_open: number;
+}
+
+export interface ExOrder {
+  id: string; symbol: string; type: string; side: string;
+  price: number | null; amount: number; filled: number;
+  status: string; datetime: string; timestamp: number;
+}
+
+export interface ExTrade {
+  id: string; symbol: string; side: string;
+  price: number; amount: number; cost: number;
+  fee: { cost: number; currency: string } | null;
+  datetime: string; timestamp: number;
+}
+
+export interface ExTx {
+  id: string; type: string; amount: number; currency: string;
+  datetime: string; timestamp: number; info?: Record<string, unknown>;
 }

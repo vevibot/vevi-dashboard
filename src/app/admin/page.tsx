@@ -1,17 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getOverview, OverviewResponse } from '@/lib/api';
+import { getOverview, OverviewResponse, AccountSnapshot, getAccounts, Account } from '@/lib/api';
 import { fmtPnl } from '@/lib/utils';
 import { MetricCard }       from '@/components/ui/MetricCard';
 import { AccountPnlBars }   from '@/components/charts/AccountPnlBars';
-import { Users, Activity, TrendingUp, Layers } from 'lucide-react';
+import { TradingDataPanel } from '@/components/TradingDataPanel';
+import { Users, Activity, TrendingUp, Layers, ChevronDown } from 'lucide-react';
 
 export default function AdminOverview() {
-  const [data, setData]   = useState<OverviewResponse | null>(null);
-  const [error, setError] = useState('');
+  const [data, setData]         = useState<OverviewResponse | null>(null);
+  const [error, setError]       = useState('');
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     getOverview().then(setData).catch((e) => setError(e.message));
+    getAccounts().then(setAccounts).catch(() => {});
     const interval = setInterval(() => {
       getOverview().then(setData).catch(() => {});
     }, 15_000);
@@ -97,27 +101,55 @@ export default function AdminOverview() {
               </tr>
             </thead>
             <tbody>
-              {data.accounts.map((acc) => (
-                <tr key={acc.account_id} className="border-b border-border/50 hover:bg-elevated/50 transition-colors duration-100">
-                  <td className="px-5 py-3.5">
-                    <p className="text-text font-medium">{acc.name}</p>
-                    <p className="text-muted text-xs">{acc.email}</p>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded border ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-slate-500/10 text-muted border-slate-600/30'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-slate-500'}`} />
-                      {acc.is_active ? 'Active' : 'Paused'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 font-mono">
-                    <span className={acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}>
-                      {fmtPnl(acc.daily_pnl)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 font-mono text-text">{acc.open_count}</td>
-                  <td className="px-5 py-3.5 font-mono text-text">{acc.daily_trades}</td>
-                </tr>
-              ))}
+              {data.accounts.map((acc) => {
+                const isOpen = expanded === acc.account_id;
+                const fullAcc = accounts.find(a => a.id === acc.account_id);
+                return (
+                  <>
+                    <tr
+                      key={acc.account_id}
+                      onClick={() => setExpanded(isOpen ? null : acc.account_id)}
+                      className="border-b border-border/50 hover:bg-elevated/50 transition-colors duration-100 cursor-pointer"
+                    >
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown size={14} className={`text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                          <div>
+                            <p className="text-text font-medium">{acc.name}</p>
+                            <p className="text-muted text-xs">{acc.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded border ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-slate-500/10 text-muted border-slate-600/30'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-slate-500'}`} />
+                          {acc.is_active ? 'Active' : 'Paused'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-mono">
+                        <span className={acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}>
+                          {fmtPnl(acc.daily_pnl)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-text">{acc.open_count}</td>
+                      <td className="px-5 py-3.5 font-mono text-text">{acc.daily_trades}</td>
+                    </tr>
+                    {isOpen && (
+                      <tr key={`${acc.account_id}-panel`} className="border-b border-border/50 bg-elevated/20">
+                        <td colSpan={5} className="p-4">
+                          <TradingDataPanel
+                            accountId={acc.account_id}
+                            exchange={fullAcc?.exchange ?? 'bingx'}
+                            openPositions={acc.open_positions}
+                            canTrade={true}
+                            onRefresh={() => getOverview().then(setData)}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
               {data.accounts.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-5 py-8 text-center text-muted text-sm">

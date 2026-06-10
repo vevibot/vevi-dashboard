@@ -9,8 +9,6 @@ const SYMBOLS = [
   { label: 'SUI',  bingx: 'SUI/USDT:USDT',   hl: 'SUI/USDC:USDC'  },
   { label: 'HYPE', bingx: 'HYPE/USDT:USDT',  hl: 'HYPE/USDC:USDC' },
   { label: 'OP',   bingx: 'OP/USDT:USDT',    hl: 'OP/USDC:USDC'   },
-  { label: 'BTC',  bingx: 'BTC/USDT:USDT',   hl: 'BTC/USDC:USDC'  },
-  { label: 'SOL',  bingx: 'SOL/USDT:USDT',   hl: 'SOL/USDC:USDC'  },
 ];
 
 export function ChartsPage() {

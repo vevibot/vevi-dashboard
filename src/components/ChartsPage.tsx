@@ -3,26 +3,22 @@ import { useState } from 'react';
 import { TradingViewChart } from './TradingViewChart';
 
 const SYMBOLS = [
-  { label: 'XRP',  bingx: 'XRP/USDT:USDT',   hl: 'XRP/USDC:USDC'  },
-  { label: 'LINK', bingx: 'LINK/USDT:USDT',  hl: 'LINK/USDC:USDC' },
-  { label: 'SUI',  bingx: 'SUI/USDT:USDT',   hl: 'SUI/USDC:USDC'  },
-  { label: 'HYPE', bingx: 'HYPE/USDT:USDT',  hl: 'HYPE/USDC:USDC' },
-  { label: 'OP',   bingx: 'OP/USDT:USDT',    hl: 'OP/USDC:USDC'   },
-  { label: 'NEAR', bingx: 'NEAR/USDT:USDT',  hl: 'NEAR/USDC:USDC' },
-  { label: 'TIA',  bingx: 'TIA/USDT:USDT',   hl: 'TIA/USDC:USDC'  },
+  { label: 'XRP',  tv: 'BINANCE:XRPUSDT.P'  },
+  { label: 'LINK', tv: 'BINANCE:LINKUSDT.P' },
+  { label: 'SUI',  tv: 'BINANCE:SUIUSDT.P'  },
+  { label: 'HYPE', tv: 'BINANCE:HYPEUSDT.P' },
+  { label: 'OP',   tv: 'BINANCE:OPUSDT.P'   },
+  { label: 'NEAR', tv: 'BINANCE:NEARUSDT.P' },
+  { label: 'TIA',  tv: 'BINANCE:TIAUSDT.P'  },
 ];
 
 export function ChartsPage() {
-  const [exchange, setExchange] = useState<'bingx' | 'hyperliquid'>('bingx');
-  const [active, setActive]     = useState(SYMBOLS[0]);
-
-  const symbol = exchange === 'bingx' ? active.bingx : active.hl;
+  const [active, setActive] = useState(SYMBOLS[0]);
 
   return (
     <div className="flex flex-col h-screen">
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border bg-surface shrink-0 flex-wrap">
-        {/* Symbol tabs */}
         <div className="flex gap-1 flex-wrap">
           {SYMBOLS.map(s => (
             <button
@@ -38,29 +34,13 @@ export function ChartsPage() {
             </button>
           ))}
         </div>
-
-        {/* Exchange toggle */}
-        <div className="ml-auto flex gap-1 bg-elevated rounded-lg p-1">
-          {(['bingx', 'hyperliquid'] as const).map(ex => (
-            <button
-              key={ex}
-              onClick={() => setExchange(ex)}
-              className={`px-3 py-1.5 rounded-md text-xs font-sans transition-colors cursor-pointer ${
-                exchange === ex ? 'bg-surface text-text font-medium' : 'text-muted hover:text-text'
-              }`}
-            >
-              {ex === 'bingx' ? 'BingX' : 'Hyperliquid'}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Chart — fills remaining height */}
       <div className="flex-1 min-h-0 p-3">
         <TradingViewChart
-          key={symbol}
-          symbol={symbol}
-          exchange={exchange}
+          key={active.tv}
+          symbol={active.tv}
           height="100%"
         />
       </div>

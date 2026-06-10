@@ -1,21 +1,13 @@
 'use client';
 import { useEffect, useRef } from 'react';
 
-function toTvSymbol(symbol: string, exchange: string): string {
-  const clean = symbol.split(':')[0];        // "XRP/USDT"
-  const [base, quote] = clean.split('/');    // "XRP", "USDT"
-  if (exchange === 'hyperliquid') return `HYPERLIQUID:${base}USDT`;
-  return `BINANCE:${base}${quote}.P`;
-}
-
 interface Props {
   symbol: string;
-  exchange: string;
   height?: number | string;
   allowSymbolChange?: boolean;
 }
 
-export function TradingViewChart({ symbol, exchange, height = 420, allowSymbolChange = false }: Props) {
+export function TradingViewChart({ symbol, height = 420, allowSymbolChange = false }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,7 +24,7 @@ export function TradingViewChart({ symbol, exchange, height = 420, allowSymbolCh
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: toTvSymbol(symbol, exchange),
+      symbol,
       interval: '15',
       timezone: 'Etc/UTC',
       theme: 'dark',
@@ -49,7 +41,7 @@ export function TradingViewChart({ symbol, exchange, height = 420, allowSymbolCh
       support_host: 'https://www.tradingview.com',
     });
     ref.current.appendChild(script);
-  }, [symbol, exchange, allowSymbolChange]);
+  }, [symbol, allowSymbolChange]);
 
   return (
     <div

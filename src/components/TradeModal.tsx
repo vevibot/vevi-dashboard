@@ -3,6 +3,11 @@ import { X } from 'lucide-react';
 import { TradingViewChart } from './TradingViewChart';
 import { OrderPanel } from './OrderPanel';
 
+function toTvSymbol(symbol: string): string {
+  const base = symbol.split('/')[0];
+  return `BINANCE:${base}USDT.P`;
+}
+
 interface Props {
   accountId: string;
   symbol: string;
@@ -36,7 +41,7 @@ export function TradeModal({ accountId, symbol, exchange, canTrade, onClose, onD
         <div className="flex flex-col lg:flex-row gap-0 overflow-hidden flex-1">
           {/* Chart */}
           <div className="flex-1 min-h-[300px] lg:min-h-0 p-3">
-            <TradingViewChart symbol={symbol} exchange={exchange} height={500} />
+            <TradingViewChart symbol={toTvSymbol(symbol)} height={500} />
           </div>
 
           {/* Order panel — only for trader/admin */}

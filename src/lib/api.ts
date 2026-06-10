@@ -51,6 +51,7 @@ export const updateAccount   = (id: string, body: Partial<AddAccountBody>) =>
   req<Account>(`/accounts/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
+export const getActivity    = ()            => req<Record<string, Record<string, { status: string; bias: number; detail: string; updated_at: string }>>>('/dashboard/activity');
 export const getOverview    = ()            => req<OverviewResponse>('/dashboard/overview');
 export const getMyDashboard = ()            => req<AccountSnapshot>('/dashboard/me');
 export const getAccountSnap = (id: string) => req<AccountSnapshot>(`/dashboard/accounts/${id}`);

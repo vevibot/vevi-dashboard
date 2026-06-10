@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 function toTvSymbol(symbol: string, exchange: string): string {
   const clean = symbol.split(':')[0];        // "XRP/USDT"
   const [base, quote] = clean.split('/');    // "XRP", "USDT"
-  if (exchange === 'hyperliquid') return `HYPERLIQUID:${base}USD`;
+  if (exchange === 'hyperliquid') return `HYPERLIQUID:${base}USDT`;
   return `BINANCE:${base}${quote}.P`;
 }
 

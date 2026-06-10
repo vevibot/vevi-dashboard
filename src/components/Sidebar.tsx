@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, Settings, LogOut,
-  TrendingUp, ListOrdered, BarChart2, Activity,
+  TrendingUp, ListOrdered, BarChart2, Activity, Briefcase,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -14,6 +14,7 @@ const adminNav: NavItem[] = [
   { href: '/admin',            label: 'Overview',  icon: <LayoutDashboard size={16} /> },
   { href: '/admin/accounts',   label: 'Accounts',  icon: <Users size={16} /> },
   { href: '/admin/activity',   label: 'Activity',  icon: <Activity size={16} /> },
+  { href: '/admin/trades',     label: 'Trades',    icon: <Briefcase size={16} /> },
   { href: '/admin/charts',     label: 'Charts',    icon: <BarChart2 size={16} /> },
   { href: '/admin/settings',   label: 'Settings',  icon: <Settings size={16} /> },
 ];

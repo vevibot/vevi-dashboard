@@ -72,6 +72,8 @@ export const getMyTrades    = async (limit = 50) => {
   const snap = await getMyDashboard();
   return getTrades(snap.account_id, limit);
 };
+export const getAdminTrades = (limit = 200) =>
+  req<{ trades: AdminTrade[] }>(`/dashboard/admin/trades?limit=${limit}`);
 
 // ── Trading (trader/admin only) ───────────────────────────────────────────────
 interface OrderBase { account_id: string; symbol: string; leverage?: number; sl?: number; tp?: number; }
@@ -101,6 +103,7 @@ export interface OpenPosition {
   symbol: string; side: string; entry: number; sl: number; tp: number | null;
   peak: number | null; trail_sl: number | null; is_trail: boolean;
   bar_count: number; opened_at: string | null;
+  current_price: number | null; unrealized_pct: number | null;
 }
 
 export interface AccountSnapshot {
@@ -119,6 +122,10 @@ export interface Trade {
   id: string; account_id: string; symbol: string; side: string;
   entry: number; exit_price: number | null; pnl: number | null;
   opened_at: string; closed_at: string | null; is_open: number;
+}
+
+export interface AdminTrade extends Trade {
+  account_name: string;
 }
 
 export interface ExOrder {

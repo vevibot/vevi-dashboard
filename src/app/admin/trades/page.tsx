@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getMyDashboard, getMyTrades, AccountSnapshot, Trade, OpenPosition } from '@/lib/api';
+import { getOverview, getAdminTrades, OverviewResponse, AdminTrade, OpenPosition } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
-import { ListOrdered } from 'lucide-react';
+import { Briefcase }   from 'lucide-react';
 
 type Tab = 'live' | 'history';
 
@@ -18,31 +18,37 @@ function duration(openedAt: string | null): string {
   return `${Math.floor(hrs / 24)}d ${hrs % 24}h`;
 }
 
-export default function TradesPage() {
+interface LivePos extends OpenPosition { account_name: string; account_id: string; }
+
+export default function AdminTradesPage() {
   const [tab, setTab]       = useState<Tab>('live');
-  const [snap, setSnap]     = useState<AccountSnapshot | null>(null);
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [overview, setOverview] = useState<OverviewResponse | null>(null);
+  const [trades, setTrades] = useState<AdminTrade[]>([]);
   const [error, setError]   = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      getMyDashboard(),
-      getMyTrades(200),
-    ])
-      .then(([s, r]) => { setSnap(s); setTrades(r.trades); })
+    Promise.all([getOverview(), getAdminTrades(200)])
+      .then(([ov, tr]) => { setOverview(ov); setTrades(tr.trades); })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
 
     const iv = setInterval(() => {
-      getMyDashboard().then(setSnap).catch(() => {});
+      getOverview().then(setOverview).catch(() => {});
     }, 15_000);
     return () => clearInterval(iv);
   }, []);
 
+  const livePositions: LivePos[] = (overview?.accounts ?? []).flatMap((acc) =>
+    acc.open_positions.map((pos) => ({
+      ...pos,
+      account_name: acc.name,
+      account_id: acc.account_id,
+    }))
+  );
+
   const closed   = trades.filter((t) => !t.is_open);
   const totalPnl = closed.reduce((s, t) => s + (t.pnl ?? 0), 0);
-  const live     = snap?.open_positions ?? [];
 
   return (
     <div className="p-8">
@@ -50,14 +56,13 @@ export default function TradesPage() {
         <div>
           <h1 className="font-sans font-semibold text-2xl text-text">Trades</h1>
           <p className="text-muted text-sm font-sans mt-1">
-            {live.length} live &middot; {closed.length} closed &middot;{' '}
+            {livePositions.length} live &middot; {closed.length} closed &middot;{' '}
             <span className={`font-mono font-medium ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
               {fmtPnl(totalPnl)} realized
             </span>
           </p>
         </div>
 
-        {/* Tab switcher */}
         <div className="flex items-center bg-surface border border-border rounded-lg p-1 gap-1">
           {(['live', 'history'] as Tab[]).map((t) => (
             <button
@@ -69,7 +74,7 @@ export default function TradesPage() {
                   : 'text-muted hover:text-text'
               }`}
             >
-              {t === 'live' ? `Live (${live.length})` : `History (${closed.length})`}
+              {t === 'live' ? `Live (${livePositions.length})` : `History (${closed.length})`}
             </button>
           ))}
         </div>
@@ -82,7 +87,7 @@ export default function TradesPage() {
           {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface rounded-lg" />)}
         </div>
       ) : tab === 'live' ? (
-        <LiveTab positions={live} />
+        <LiveTab positions={livePositions} />
       ) : (
         <HistoryTab trades={closed} totalPnl={totalPnl} allTrades={trades} />
       )}
@@ -92,33 +97,34 @@ export default function TradesPage() {
 
 // ── Live tab ──────────────────────────────────────────────────────────────────
 
-function LiveTab({ positions }: { positions: OpenPosition[] }) {
+function LiveTab({ positions }: { positions: LivePos[] }) {
   if (positions.length === 0) {
     return (
       <div className="bg-surface border border-border rounded-xl p-12 text-center">
-        <ListOrdered size={28} className="text-muted mx-auto mb-2" />
-        <p className="text-muted text-sm font-sans">No open positions right now.</p>
+        <Briefcase size={28} className="text-muted mx-auto mb-2" />
+        <p className="text-muted text-sm font-sans">No open positions across any account.</p>
       </div>
     );
   }
 
   return (
     <div className="bg-surface border border-border rounded-xl overflow-x-auto">
-      <table className="w-full text-sm font-sans min-w-[700px]">
+      <table className="w-full text-sm font-sans min-w-[800px]">
         <thead>
           <tr className="border-b border-border">
-            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration'].map((h) => (
+            {['Account', 'Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration'].map((h) => (
               <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {positions.map((pos) => {
-            const pct     = pos.unrealized_pct;
-            const pctPos  = pct !== null && pct >= 0;
-            const sym     = pos.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '');
+            const pct    = pos.unrealized_pct;
+            const pctPos = pct !== null && pct >= 0;
+            const sym    = pos.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '');
             return (
-              <tr key={pos.symbol} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
+              <tr key={`${pos.account_id}-${pos.symbol}`} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
+                <td className="px-5 py-3.5 text-text text-sm font-sans">{pos.account_name}</td>
                 <td className="px-5 py-3.5 font-mono font-medium text-text">
                   {sym}
                   <span className="ml-2 text-[10px] bg-green/10 text-green border border-green/20 rounded px-1 py-0.5">OPEN</span>
@@ -151,14 +157,14 @@ function LiveTab({ positions }: { positions: OpenPosition[] }) {
 
 // ── History tab ───────────────────────────────────────────────────────────────
 
-function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl: number; allTrades: Trade[] }) {
+function HistoryTab({ trades, totalPnl, allTrades }: { trades: AdminTrade[]; totalPnl: number; allTrades: AdminTrade[] }) {
   return (
     <>
       {allTrades.length > 0 && (
         <div className="bg-surface border border-border rounded-xl p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-muted text-xs font-sans uppercase tracking-wide">Cumulative P&L</p>
+              <p className="text-muted text-xs font-sans uppercase tracking-wide">Cumulative P&L — All Accounts</p>
               <p className={`font-mono font-semibold text-lg mt-0.5 ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
                 {fmtPnl(totalPnl)}
               </p>
@@ -173,7 +179,7 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl
         <table className="w-full text-sm font-sans">
           <thead>
             <tr className="border-b border-border">
-              {['Symbol', 'Side', 'Entry', 'Exit', 'P&L', 'Opened', 'Closed'].map((h) => (
+              {['Account', 'Symbol', 'Side', 'Entry', 'Exit', 'P&L', 'Opened', 'Closed'].map((h) => (
                 <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
               ))}
             </tr>
@@ -184,6 +190,7 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl
               const pnl  = t.pnl ?? 0;
               return (
                 <tr key={t.id} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
+                  <td className="px-5 py-3.5 text-text text-sm font-sans">{t.account_name}</td>
                   <td className="px-5 py-3.5 font-mono font-medium text-text">
                     {t.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '')}
                   </td>
@@ -200,8 +207,8 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl
             })}
             {trades.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-12 text-center">
-                  <ListOrdered size={28} className="text-muted mx-auto mb-2" />
+                <td colSpan={8} className="px-5 py-12 text-center">
+                  <Briefcase size={28} className="text-muted mx-auto mb-2" />
                   <p className="text-muted text-sm">No closed trades yet.</p>
                 </td>
               </tr>

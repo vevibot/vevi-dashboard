@@ -144,6 +144,18 @@ export default function AccountsPage() {
       {editAcc && (
         <EditAccountModal account={editAcc} onClose={() => { setEditAcc(null); reload(); }} />
       )}
+
+      {/* Trade modal */}
+      {tradeSymbol && selected && (
+        <TradeModal
+          accountId={selected.account_id}
+          symbol={tradeSymbol}
+          exchange={accounts.find(a => a.id === selected.account_id)?.exchange || 'bingx'}
+          canTrade={true}
+          onClose={() => setTradeSymbol(null)}
+          onDone={() => getAccountSnap(selected.account_id).then(setSelected)}
+        />
+      )}
     </div>
   );
 }
@@ -223,17 +235,6 @@ function AccountDrawer({ snap, exchange, onClose, onTrade }: {
           </div>
         </div>
       </div>
-
-      {tradeSymbol && selected && (
-        <TradeModal
-          accountId={selected.account_id}
-          symbol={tradeSymbol}
-          exchange={accounts.find(a => a.id === selected.account_id)?.exchange || 'bingx'}
-          canTrade={true}
-          onClose={() => setTradeSymbol(null)}
-          onDone={() => getAccountSnap(selected.account_id).then(setSelected)}
-        />
-      )}
     </div>
   );
 }

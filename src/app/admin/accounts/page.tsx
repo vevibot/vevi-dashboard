@@ -10,9 +10,6 @@ import { PositionCard } from '@/components/ui/PositionCard';
 import { TradeModal }   from '@/components/TradeModal';
 import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight, Pencil } from 'lucide-react';
 
-function exchangeFromSymbol(sym: string): string {
-  return sym.includes('USDC') ? 'hyperliquid' : 'bingx';
-}
 
 export default function AccountsPage() {
   const [accounts, setAccounts]       = useState<Account[]>([]);
@@ -130,7 +127,12 @@ export default function AccountsPage() {
 
       {/* Account detail drawer */}
       {selected && (
-        <AccountDrawer snap={selected} onClose={() => setSelected(null)} />
+        <AccountDrawer
+          snap={selected}
+          exchange={accounts.find(a => a.id === selected.account_id)?.exchange || 'bingx'}
+          onClose={() => setSelected(null)}
+          onTrade={setTradeSymbol}
+        />
       )}
 
       {/* Add account modal */}
@@ -146,7 +148,17 @@ export default function AccountsPage() {
   );
 }
 
-function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () => void }) {
+const TRADE_SYMBOLS = ['XRP', 'ETH', 'LINK', 'SUI', 'HYPE', 'OP', 'BTC', 'SOL'];
+
+function AccountDrawer({ snap, exchange, onClose, onTrade }: {
+  snap: AccountSnapshot;
+  exchange: string;
+  onClose: () => void;
+  onTrade: (symbol: string) => void;
+}) {
+  const toSymbol = (base: string) =>
+    exchange === 'hyperliquid' ? `${base}/USDC:USDC` : `${base}/USDT:USDT`;
+
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-bg/80 backdrop-blur-sm" onClick={onClose} />
@@ -154,7 +166,7 @@ function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () =
         <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-surface">
           <div>
             <h2 className="text-text font-sans font-semibold">{snap.name}</h2>
-            <p className="text-muted text-xs">{snap.email}</p>
+            <p className="text-muted text-xs">{snap.email} · <span className="uppercase font-mono">{exchange}</span></p>
           </div>
           <button onClick={onClose} className="text-muted hover:text-text cursor-pointer transition-colors">
             <X size={18} />
@@ -176,6 +188,24 @@ function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () =
             </div>
           </div>
 
+          {/* New trade — symbol picker */}
+          <div>
+            <h3 className="text-muted text-xs font-medium uppercase tracking-wider mb-3">New Trade</h3>
+            <div className="grid grid-cols-4 gap-1.5">
+              {TRADE_SYMBOLS.map(base => (
+                <button
+                  key={base}
+                  onClick={() => onTrade(toSymbol(base))}
+                  className="py-2 rounded-lg text-xs font-mono font-semibold bg-elevated border border-border
+                             text-muted hover:text-green hover:border-green/40 hover:bg-green/5
+                             transition-colors cursor-pointer"
+                >
+                  {base}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Open positions */}
           <div>
             <h3 className="text-muted text-xs font-medium uppercase tracking-wider mb-3">
@@ -184,7 +214,7 @@ function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () =
             {snap.open_positions.length > 0 ? (
               <div className="space-y-3">
                 {snap.open_positions.map((p) => (
-                  <PositionCard key={p.symbol} position={p} onTrade={setTradeSymbol} />
+                  <PositionCard key={p.symbol} position={p} onTrade={onTrade} />
                 ))}
               </div>
             ) : (
@@ -198,7 +228,7 @@ function AccountDrawer({ snap, onClose }: { snap: AccountSnapshot; onClose: () =
         <TradeModal
           accountId={selected.account_id}
           symbol={tradeSymbol}
-          exchange={exchangeFromSymbol(tradeSymbol)}
+          exchange={accounts.find(a => a.id === selected.account_id)?.exchange || 'bingx'}
           canTrade={true}
           onClose={() => setTradeSymbol(null)}
           onDone={() => getAccountSnap(selected.account_id).then(setSelected)}

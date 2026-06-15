@@ -7,8 +7,11 @@ import { Lock, TrendingUp, Filter, Coins, Shield, Clock, AlertTriangle } from 'l
  * Web-based editing TBD (would require backend write endpoint + auth gate).
  */
 const STRATEGY_CONFIG = {
-  symbols: ['LINK', 'SUI', 'HYPE', 'NEAR', 'OP', 'TIA'],
-  removed: [{ s: 'XRP', reason: 'PF 0.57 backtest — structural loser, dropped 2026-06-15' }],
+  symbols: ['SUI', 'HYPE', 'TIA', 'NEAR', 'OP', 'JTO', 'SEI', 'STRK', 'FET', 'APT'],
+  removed: [
+    { s: 'XRP',  reason: 'PF 0.57 backtest — structural loser, dropped 2026-06-15' },
+    { s: 'LINK', reason: 'PF 1.81 — only sub-PF-2.0 of original 6, dropped Phase 1C' },
+  ],
   smartExit: {
     enabled: true,
     triggerR: 0.5,
@@ -16,7 +19,7 @@ const STRATEGY_CONFIG = {
     deployedAt: '2026-06-15 11:46 UTC',
   },
   trail: { mult: 5.0, maxHoldBars: 2016 },
-  risk: { perTrade: 14, leverage: 20, dailyLossLimit: 20, fallbackTradeUSDT: 5 },
+  risk: { perTrade: 14, leverage: 20, dailyLossLimitPct: 10, dailyLossLimitMin: 1, fallbackTradeUSDT: 5 },
   filters: {
     blockHours: [11, 12, 13, 18, 21],
     rsi: { enabled: true, longMin: 50, shortMax: 50, period: 14 },
@@ -90,7 +93,7 @@ export default function SettingsPage() {
         <Section icon={<Shield size={14} />} title="Risk & Position Sizing">
           <Row label="Per-trade risk" value={`${c.risk.perTrade}%`} sub="of account balance, dynamic" />
           <Row label="Leverage" value={`${c.risk.leverage}x`} sub="all symbols" />
-          <Row label="Daily loss limit" value={`$${c.risk.dailyLossLimit}`} sub="bot stops opening new trades" />
+          <Row label="Daily loss limit" value={`${c.risk.dailyLossLimitPct}%`} sub={`of balance, min $${c.risk.dailyLossLimitMin} — bot stops opening new trades`} />
           <Row label="Initial trail" value={`${c.trail.mult}R`} sub="before CHoCH tighten" />
           <Row label="Max hold" value={`${c.trail.maxHoldBars} bars`} sub="≈ 7 days on 5M" />
           <Row label="Fallback size" value={`$${c.risk.fallbackTradeUSDT}`} sub="if balance fetch fails" />

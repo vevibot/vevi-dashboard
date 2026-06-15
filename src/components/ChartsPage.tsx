@@ -3,12 +3,16 @@ import { useState } from 'react';
 import { TradingViewChart } from './TradingViewChart';
 
 const SYMBOLS = [
-  { label: 'LINK', tv: 'BINANCE:LINKUSDT.P' },
   { label: 'SUI',  tv: 'BINANCE:SUIUSDT.P'  },
   { label: 'HYPE', tv: 'BINANCE:HYPEUSDT.P' },
+  { label: 'TIA',  tv: 'BINANCE:TIAUSDT.P'  },
   { label: 'NEAR', tv: 'BINANCE:NEARUSDT.P' },
   { label: 'OP',   tv: 'BINANCE:OPUSDT.P'   },
-  { label: 'TIA',  tv: 'BINANCE:TIAUSDT.P'  },
+  { label: 'JTO',  tv: 'BINANCE:JTOUSDT.P'  },
+  { label: 'SEI',  tv: 'BINANCE:SEIUSDT.P'  },
+  { label: 'STRK', tv: 'BINANCE:STRKUSDT.P' },
+  { label: 'FET',  tv: 'BINANCE:FETUSDT.P'  },
+  { label: 'APT',  tv: 'BINANCE:APTUSDT.P'  },
 ];
 
 export function ChartsPage() {

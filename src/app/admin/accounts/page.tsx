@@ -33,8 +33,13 @@ export default function AccountsPage() {
   }
 
   async function handleActivate(id: string) {
-    await activateAccount(id);
-    reload();
+    try {
+      await activateAccount(id);
+      reload();
+    } catch (err: any) {
+      // Backend returns 400 with a credential-validation reason. Show to admin.
+      alert(`Cannot activate this account.\n\n${err.message || err}\n\nFix the API key/secret via Edit and try again.`);
+    }
   }
 
   async function handleDelete(id: string) {
@@ -252,7 +257,12 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
     setLoading(true);
     setError('');
     try {
-      await addAccount(form);
+      const res: any = await addAccount(form);
+      // Backend now returns { account, verified, message, warning }.
+      // If creds didn't pass live check, the account is created but paused.
+      if (res && res.warning) {
+        alert(res.warning);   // surface to admin so they re-enter keys
+      }
       onClose();
     } catch (err: any) {
       setError(err.message);

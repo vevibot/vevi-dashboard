@@ -72,7 +72,7 @@ export default function AdminOverview() {
               <ChevronDown size={12} className={`text-muted transition-transform duration-200 ${balOpen ? 'rotate-180' : ''}`} />
             </div>
           </div>
-          <span className="font-mono text-2xl font-semibold text-text">
+          <span className="font-mono text-xl md:text-2xl font-semibold text-text leading-tight break-all">
             {data.total_balance > 0 ? `$${data.total_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
           </span>
           <span className="text-muted text-xs font-sans">Click to see per-account</span>

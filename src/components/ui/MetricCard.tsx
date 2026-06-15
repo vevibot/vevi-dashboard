@@ -20,7 +20,7 @@ export function MetricCard({ label, value, sub, positive, icon }: Props) {
         <span className="text-muted text-[11px] font-sans uppercase tracking-wider">{label}</span>
         {icon && <span className="text-muted">{icon}</span>}
       </div>
-      <span className={cn('font-mono text-2xl font-semibold leading-tight', valueColor)}>{value}</span>
+      <span className={cn('font-mono text-xl md:text-2xl font-semibold leading-tight break-all', valueColor)}>{value}</span>
       {sub && <span className="text-muted text-xs font-sans">{sub}</span>}
     </div>
   );

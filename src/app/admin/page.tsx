@@ -154,10 +154,77 @@ export default function AdminOverview() {
         </div>
       </div>
 
-      {/* Full accounts table */}
+      {/* Full accounts list */}
       <div>
         <h2 className="font-sans font-medium text-text mb-4">All Accounts</h2>
-        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+
+        {/* Mobile: card layout (<md) */}
+        <div className="md:hidden space-y-3">
+          {data.accounts.map((acc) => {
+            const isOpen = expanded === acc.account_id;
+            const fullAcc = accounts.find(a => a.id === acc.account_id);
+            return (
+              <div key={acc.account_id} className="bg-surface border border-border rounded-xl overflow-hidden">
+                <div
+                  onClick={() => setExpanded(isOpen ? null : acc.account_id)}
+                  className="p-4 active:bg-elevated/50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-text font-medium truncate">{acc.name}</p>
+                      <p className="text-muted text-xs truncate">{acc.email}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-slate-500/10 text-muted border-slate-600/30'}`}>
+                      <span className={`w-1 h-1 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-slate-500'}`} />
+                      {acc.is_active ? 'Active' : 'Paused'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 pt-3 border-t border-border/40">
+                    <div>
+                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">Balance</p>
+                      <p className="font-mono font-semibold text-xs text-text">
+                        {acc.balance > 0 ? `$${acc.balance.toFixed(2)}` : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">P&L</p>
+                      <p className={`font-mono font-semibold text-xs ${acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}`}>
+                        {fmtPnl(acc.daily_pnl)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">Open</p>
+                      <p className="font-mono font-semibold text-xs text-text">{acc.open_count}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">Trades</p>
+                      <p className="font-mono font-semibold text-xs text-text">{acc.daily_trades}</p>
+                    </div>
+                  </div>
+                </div>
+                {isOpen && (
+                  <div className="border-t border-border/50 bg-elevated/20 p-3">
+                    <TradingDataPanel
+                      accountId={acc.account_id}
+                      exchange={fullAcc?.exchange ?? 'bingx'}
+                      openPositions={acc.open_positions}
+                      canTrade={true}
+                      onRefresh={() => getOverview().then(setData)}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {data.accounts.length === 0 && (
+            <div className="bg-surface border border-border rounded-xl px-5 py-12 text-center text-muted text-sm">
+              No accounts yet — add one from the Accounts page.
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: table layout (≥md) */}
+        <div className="hidden md:block bg-surface border border-border rounded-xl overflow-hidden">
           <table className="w-full text-sm font-sans">
             <thead>
               <tr className="border-b border-border">

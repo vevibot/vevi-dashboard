@@ -98,7 +98,11 @@ export function Sidebar({ role }: Props) {
       )}
       <aside
         className={cn(
-          'md:hidden fixed top-0 left-0 z-50 w-72 h-screen bg-surface border-r border-border flex flex-col transition-transform duration-300',
+          // h-[100dvh] = dynamic viewport height; correctly handles iOS Safari's
+          // address bar + bottom toolbar that shrink/grow the visible area
+          // (h-screen would put the bottom of the drawer behind the URL bar).
+          'md:hidden fixed top-0 left-0 z-50 w-72 h-[100dvh] bg-surface border-r border-border flex flex-col transition-transform duration-300',
+          'pb-[env(safe-area-inset-bottom)]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >

@@ -7,10 +7,13 @@ import {
   OpenPosition, ExOrder, ExTrade, ExTx, Trade,
 } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
+import { STRATEGY_BASES } from '@/lib/symbols';
 
 const TABS = ['Positions', 'Open Orders', 'Order History', 'Trade History', 'Position History', 'Transaction History'] as const;
 type Tab = typeof TABS[number];
-const SYMBOLS = ['ALL', 'SUI', 'HYPE', 'TIA', 'NEAR', 'OP', 'JTO', 'SEI', 'STRK', 'FET', 'APT'];
+// Filter row: strategy symbols + 'ALL' (covers what the bot trades).
+// Manual-only symbols (BTC/ETH/etc) won't have prior history filtered here.
+const SYMBOLS = ['ALL', ...STRATEGY_BASES];
 
 function toFullSym(base: string, exchange: string) {
   return exchange === 'hyperliquid' ? `${base}/USDC:USDC` : `${base}/USDT:USDT`;

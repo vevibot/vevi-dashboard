@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { broadcastTrade, BroadcastResult } from '@/lib/api';
 import { X, Radio, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { MANUAL_TRADE_BASES_UNIQUE, toUsdtPerp, isStrategySymbol } from '@/lib/symbols';
 
-const SYMBOLS = ['XRP/USDT:USDT', 'LINK/USDT:USDT', 'SUI/USDT:USDT', 'HYPE/USDT:USDT', 'NEAR/USDT:USDT', 'OP/USDT:USDT', 'TIA/USDT:USDT'];
+// Manual broadcast — full catalogue, not limited to the strategy 10.
+const SYMBOLS = MANUAL_TRADE_BASES_UNIQUE.map(toUsdtPerp);
 
 interface Props { onClose: () => void; }
 
@@ -63,7 +65,11 @@ export function BroadcastModal({ onClose }: Props) {
                   value={symbol} onChange={e => setSymbol(e.target.value)}
                   className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-green/60 cursor-pointer"
                 >
-                  {SYMBOLS.map(s => <option key={s} value={s}>{s.split('/')[0]}</option>)}
+                  {SYMBOLS.map(s => {
+                    const base = s.split('/')[0];
+                    const tag  = isStrategySymbol(base) ? ' · bot' : '';
+                    return <option key={s} value={s}>{base}{tag}</option>;
+                  })}
                 </select>
               </div>
 

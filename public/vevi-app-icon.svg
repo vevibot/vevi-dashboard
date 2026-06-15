@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Full-bleed iOS app icon (1024×1024). iOS auto-rounds corners. -->
+
+  <!-- Background: subtle radial gradient from charcoal to pure black -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="80%">
+      <stop offset="0%"  stop-color="#0E0E0E"/>
+      <stop offset="60%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <!-- Neon green with glow -->
+    <linearGradient id="vGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#22FF66"/>
+      <stop offset="60%"  stop-color="#00FF41"/>
+      <stop offset="100%" stop-color="#00CC33"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background fills the whole canvas (iOS rounds) -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Subtle inner border for definition -->
+  <rect x="2" y="2" width="1020" height="1020" rx="220" ry="220"
+        fill="none" stroke="#1A1A1A" stroke-width="2"/>
+
+  <!-- Faint horizontal grid lines for "trading" feel -->
+  <g stroke="#0F2A18" stroke-width="1" opacity="0.6">
+    <line x1="80"  y1="280" x2="944" y2="280"/>
+    <line x1="80"  y1="744" x2="944" y2="744"/>
+  </g>
+
+  <!-- Diagonal "candle" accent — top right -->
+  <g opacity="0.18">
+    <rect x="780" y="180" width="14" height="160" fill="#00FF41"/>
+    <line x1="787" y1="140" x2="787" y2="180" stroke="#00FF41" stroke-width="3"/>
+    <line x1="787" y1="340" x2="787" y2="380" stroke="#00FF41" stroke-width="3"/>
+  </g>
+
+  <!-- Diagonal "candle" accent — bottom left -->
+  <g opacity="0.18">
+    <rect x="230" y="700" width="14" height="120" fill="#00FF41"/>
+    <line x1="237" y1="660" x2="237" y2="700" stroke="#00FF41" stroke-width="3"/>
+    <line x1="237" y1="820" x2="237" y2="860" stroke="#00FF41" stroke-width="3"/>
+  </g>
+
+  <!-- BIG bold V — the centerpiece -->
+  <g filter="url(#glow)">
+    <path d="
+      M 220 280
+      L 380 280
+      L 512 660
+      L 644 280
+      L 804 280
+      L 600 800
+      L 424 800
+      Z"
+      fill="url(#vGrad)"/>
+  </g>
+
+  <!-- Soft inner highlight on the V (top edge) -->
+  <path d="M 220 280 L 380 280 L 512 660 L 644 280 L 804 280 L 730 280 L 644 280 L 600 380 L 424 380 L 380 280 L 290 280 Z"
+        fill="white" opacity="0.06"/>
+</svg>

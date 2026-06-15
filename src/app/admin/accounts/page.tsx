@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PositionCard } from '@/components/ui/PositionCard';
 import { TradeModal }   from '@/components/TradeModal';
 import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight, Pencil } from 'lucide-react';
+import { MANUAL_TRADE_BASES_UNIQUE, isStrategySymbol } from '@/lib/symbols';
 
 
 export default function AccountsPage() {
@@ -165,7 +166,8 @@ export default function AccountsPage() {
   );
 }
 
-const TRADE_SYMBOLS = ['SUI', 'HYPE', 'TIA', 'NEAR', 'OP', 'JTO', 'SEI', 'STRK', 'FET', 'APT'];
+// Manual trading from the account drawer — full catalogue (not just strategy 10).
+const TRADE_SYMBOLS = MANUAL_TRADE_BASES_UNIQUE;
 
 function AccountDrawer({ snap, exchange, onClose, onTrade }: {
   snap: AccountSnapshot;
@@ -205,21 +207,36 @@ function AccountDrawer({ snap, exchange, onClose, onTrade }: {
             </div>
           </div>
 
-          {/* New trade — symbol picker */}
+          {/* New trade — symbol picker (full catalogue, bot-active marked) */}
           <div>
-            <h3 className="text-muted text-xs font-medium uppercase tracking-wider mb-3">New Trade</h3>
-            <div className="grid grid-cols-4 gap-1.5">
-              {TRADE_SYMBOLS.map(base => (
-                <button
-                  key={base}
-                  onClick={() => onTrade(toSymbol(base))}
-                  className="py-2 rounded-lg text-xs font-mono font-semibold bg-elevated border border-border
-                             text-muted hover:text-green hover:border-green/40 hover:bg-green/5
-                             transition-colors cursor-pointer"
-                >
-                  {base}
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-muted text-xs font-medium uppercase tracking-wider">
+                New Trade
+              </h3>
+              <p className="text-[10px] text-muted/70 font-sans">
+                <span className="font-mono text-green">●</span> = bot is trading
+              </p>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 max-h-72 overflow-y-auto pr-1">
+              {TRADE_SYMBOLS.map(base => {
+                const isBot = isStrategySymbol(base);
+                return (
+                  <button
+                    key={base}
+                    onClick={() => onTrade(toSymbol(base))}
+                    title={isBot ? `${base} — bot is actively trading this` : `${base} — manual only`}
+                    className={`relative py-2 rounded-lg text-xs font-mono font-semibold border
+                               transition-colors cursor-pointer ${
+                      isBot
+                        ? 'bg-green/8 border-green/30 text-green hover:bg-green/15 hover:border-green/50'
+                        : 'bg-elevated border-border text-muted hover:text-text hover:border-text/30'
+                    }`}
+                  >
+                    {isBot && <span className="absolute top-1 right-1.5 w-1 h-1 rounded-full bg-green" />}
+                    {base}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

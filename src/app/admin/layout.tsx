@@ -11,9 +11,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="md:flex min-h-screen">
       <Sidebar role="admin" />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto min-w-0">{children}</main>
     </div>
   );
 }

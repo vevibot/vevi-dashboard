@@ -49,7 +49,7 @@ export default function AccountsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-sans font-semibold text-2xl text-text">Accounts</h1>
@@ -64,8 +64,8 @@ export default function AccountsPage() {
         </button>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm font-sans">
+      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
+        <table className="w-full text-sm font-sans min-w-[640px]">
           <thead>
             <tr className="border-b border-border">
               {['Account', 'Exchange', 'Status', 'Daily P&L', 'Open Pos', 'Created', 'Actions'].map((h) => (
@@ -179,7 +179,7 @@ function AccountDrawer({ snap, exchange, onClose, onTrade }: {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-bg/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="w-96 bg-surface border-l border-border flex flex-col overflow-y-auto">
+      <div className="w-full sm:w-96 bg-surface border-l border-border flex flex-col overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-surface">
           <div>
             <h2 className="text-text font-sans font-semibold">{snap.name}</h2>

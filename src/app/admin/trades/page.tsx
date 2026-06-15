@@ -254,7 +254,7 @@ export default function AdminTradesPage() {
   const totalPnl = closed.reduce((s, t) => s + (t.pnl ?? 0), 0);
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Page header */}
       <div className="mb-6 flex items-end justify-between">
         <div>

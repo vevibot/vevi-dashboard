@@ -114,9 +114,9 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="font-sans font-semibold text-2xl text-text">Activity</h1>
           <p className="text-muted text-sm font-sans mt-1">

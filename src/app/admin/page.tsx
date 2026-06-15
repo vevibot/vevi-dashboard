@@ -39,7 +39,7 @@ export default function AdminOverview() {
   const activeAccs  = data.accounts.filter((a) => a.is_active);
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-sans font-semibold text-2xl text-text">Overview</h1>
@@ -236,7 +236,7 @@ export default function AdminOverview() {
 
 function PageLoading() {
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="animate-pulse space-y-4">
         <div className="h-8 w-48 bg-surface rounded-lg" />
         <div className="grid grid-cols-4 gap-4">

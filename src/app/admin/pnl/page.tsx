@@ -21,7 +21,7 @@ export default function PnlCalendarPage() {
   const wr       = closed.length > 0 ? (wins / closed.length * 100).toFixed(1) : '—';
 
   if (loading) return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="animate-pulse space-y-4">
         <div className="h-8 w-40 bg-surface rounded-lg" />
         <div className="h-96 bg-surface rounded-xl" />
@@ -36,7 +36,7 @@ export default function PnlCalendarPage() {
   );
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
         <h1 className="font-sans font-semibold text-2xl text-text">P&L Calendar</h1>
         <p className="text-muted text-sm font-sans mt-1">Daily profit & loss across all accounts</p>

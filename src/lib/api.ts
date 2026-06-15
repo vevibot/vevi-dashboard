@@ -88,6 +88,11 @@ export const closePosition = (b: CloseBody)        => req<any>('/trading/close',
 export const modifySlTp    = (b: ModifyBody)       => req<any>('/trading/sl-tp',     { method: 'PUT',  body: JSON.stringify(b) });
 export const closeAll      = (account_id: string)  => req<any>('/trading/close-all', { method: 'POST', body: JSON.stringify({ account_id, symbol: '' }) });
 
+export interface BroadcastOrderBody { symbol: string; side: 'buy'|'sell'; usdt_amount: number; leverage?: number; sl?: number; tp?: number; }
+export interface BroadcastResult { account_id: string; account_name: string; ok: boolean; order_id?: string; price?: number; contracts?: number; error?: string; }
+export interface BroadcastResponse { ok: boolean; placed: number; total: number; results: BroadcastResult[]; }
+export const broadcastTrade = (b: BroadcastOrderBody) => req<BroadcastResponse>('/trading/broadcast', { method: 'POST', body: JSON.stringify(b) });
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface Account {
   id: string; name: string; email: string; exchange: string;

@@ -1,10 +1,18 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getOverview, getAdminTrades, OverviewResponse, AdminTrade, OpenPosition } from '@/lib/api';
+import {
+  getOverview, getAdminTrades, broadcastTrade,
+  OverviewResponse, AdminTrade, OpenPosition, BroadcastResult,
+} from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
-import { Briefcase }   from 'lucide-react';
+import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown } from 'lucide-react';
+
+const SYMBOLS = [
+  'XRP/USDT:USDT', 'LINK/USDT:USDT', 'SUI/USDT:USDT',
+  'HYPE/USDT:USDT', 'NEAR/USDT:USDT', 'OP/USDT:USDT', 'TIA/USDT:USDT',
+];
 
 type Tab = 'live' | 'history';
 
@@ -20,12 +28,211 @@ function duration(openedAt: string | null): string {
 
 interface LivePos extends OpenPosition { account_name: string; account_id: string; }
 
+// ── Broadcast panel ───────────────────────────────────────────────────────────
+
+function BroadcastPanel() {
+  const [symbol,   setSymbol]   = useState(SYMBOLS[0]);
+  const [side,     setSide]     = useState<'buy' | 'sell'>('buy');
+  const [amount,   setAmount]   = useState('10');
+  const [leverage, setLeverage] = useState('20');
+  const [sl,       setSl]       = useState('');
+  const [tp,       setTp]       = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [results,  setResults]  = useState<BroadcastResult[] | null>(null);
+  const [error,    setError]    = useState('');
+
+  const submit = async () => {
+    if (!amount || parseFloat(amount) <= 0) return;
+    setLoading(true); setError(''); setResults(null);
+    try {
+      const res = await broadcastTrade({
+        symbol,
+        side,
+        usdt_amount: parseFloat(amount),
+        leverage:    parseInt(leverage) || 20,
+        sl:          sl ? parseFloat(sl) : undefined,
+        tp:          tp ? parseFloat(tp) : undefined,
+      });
+      setResults(res.results);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => { setResults(null); setError(''); };
+
+  return (
+    <div className="bg-surface border border-border rounded-xl mb-6 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-elevated/40">
+        <div className="w-2 h-2 rounded-full bg-green animate-pulse-slow" />
+        <Radio size={14} className="text-green" />
+        <span className="font-mono font-semibold text-sm text-text">Broadcast Trade</span>
+        <span className="text-[10px] bg-green/10 text-green border border-green/30 rounded px-1.5 py-0.5 font-mono">ADMIN · ALL ACCOUNTS</span>
+        <span className="text-xs text-muted font-sans ml-auto">Places the same trade simultaneously on every active account</span>
+      </div>
+
+      <div className="p-5">
+        {!results ? (
+          <div className="flex flex-wrap gap-4 items-end">
+
+            {/* Symbol */}
+            <div className="flex flex-col gap-1.5 min-w-[120px]">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Symbol</label>
+              <div className="relative">
+                <select
+                  value={symbol} onChange={e => setSymbol(e.target.value)}
+                  className="appearance-none w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60 pr-8 cursor-pointer"
+                >
+                  {SYMBOLS.map(s => <option key={s} value={s}>{s.split('/')[0]}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Side */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Direction</label>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setSide('buy')}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-mono font-semibold transition-colors border cursor-pointer ${
+                    side === 'buy'
+                      ? 'bg-green/15 text-green border-green/40'
+                      : 'bg-elevated text-muted border-border hover:text-text'
+                  }`}
+                >
+                  ▲ LONG
+                </button>
+                <button
+                  onClick={() => setSide('sell')}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-mono font-semibold transition-colors border cursor-pointer ${
+                    side === 'sell'
+                      ? 'bg-red/15 text-red border-red/40'
+                      : 'bg-elevated text-muted border-border hover:text-text'
+                  }`}
+                >
+                  ▼ SHORT
+                </button>
+              </div>
+            </div>
+
+            {/* USDT Amount */}
+            <div className="flex flex-col gap-1.5 w-28">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">USDT Amount</label>
+              <input
+                type="number" value={amount} onChange={e => setAmount(e.target.value)}
+                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                placeholder="10"
+              />
+            </div>
+
+            {/* Leverage */}
+            <div className="flex flex-col gap-1.5 w-24">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Leverage</label>
+              <input
+                type="number" value={leverage} onChange={e => setLeverage(e.target.value)}
+                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                placeholder="20"
+              />
+            </div>
+
+            {/* SL */}
+            <div className="flex flex-col gap-1.5 w-32">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Stop Loss <span className="normal-case text-muted/60">(opt)</span></label>
+              <input
+                type="number" value={sl} onChange={e => setSl(e.target.value)}
+                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                placeholder="0.000"
+              />
+            </div>
+
+            {/* TP */}
+            <div className="flex flex-col gap-1.5 w-32">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Take Profit <span className="normal-case text-muted/60">(opt)</span></label>
+              <input
+                type="number" value={tp} onChange={e => setTp(e.target.value)}
+                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                placeholder="0.000"
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] text-transparent font-sans uppercase tracking-wide select-none">.</label>
+              <button
+                onClick={submit} disabled={loading}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-mono font-semibold text-sm transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  side === 'buy'
+                    ? 'bg-green/15 text-green border-green/40 hover:bg-green/25'
+                    : 'bg-red/15 text-red border-red/40 hover:bg-red/25'
+                }`}
+              >
+                {loading
+                  ? <><Loader2 size={14} className="animate-spin" /> Placing…</>
+                  : <><Radio size={14} /> Broadcast {side === 'buy' ? 'LONG' : 'SHORT'}</>
+                }
+              </button>
+            </div>
+
+            {error && (
+              <div className="w-full mt-1">
+                <p className="text-red text-xs font-sans">{error}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Results */
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-sans text-text">
+                Placed on{' '}
+                <span className="text-green font-mono font-semibold">{results.filter(r => r.ok).length}</span>
+                {' '}/ {results.length} accounts
+              </p>
+              <button onClick={reset} className="text-xs text-muted hover:text-text font-sans transition-colors cursor-pointer underline underline-offset-2">
+                New trade
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {results.map(r => (
+                <div
+                  key={r.account_id}
+                  className={`flex items-start gap-2.5 px-4 py-3 rounded-lg border min-w-[200px] ${
+                    r.ok ? 'bg-green/5 border-green/20' : 'bg-red/5 border-red/20'
+                  }`}
+                >
+                  {r.ok
+                    ? <CheckCircle2 size={14} className="text-green mt-0.5 shrink-0" />
+                    : <XCircle     size={14} className="text-red   mt-0.5 shrink-0" />
+                  }
+                  <div>
+                    <p className="text-text text-xs font-medium font-sans">{r.account_name}</p>
+                    {r.ok
+                      ? <p className="text-muted text-[11px] font-mono">@ {r.price?.toFixed(4)} · {r.contracts} lots</p>
+                      : <p className="text-red text-[11px] font-sans">{r.error}</p>
+                    }
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function AdminTradesPage() {
-  const [tab, setTab]       = useState<Tab>('live');
+  const [tab,      setTab]      = useState<Tab>('live');
   const [overview, setOverview] = useState<OverviewResponse | null>(null);
-  const [trades, setTrades] = useState<AdminTrade[]>([]);
-  const [error, setError]   = useState('');
-  const [loading, setLoading] = useState(true);
+  const [trades,   setTrades]   = useState<AdminTrade[]>([]);
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
     Promise.all([getOverview(), getAdminTrades(200)])
@@ -40,11 +247,7 @@ export default function AdminTradesPage() {
   }, []);
 
   const livePositions: LivePos[] = (overview?.accounts ?? []).flatMap((acc) =>
-    acc.open_positions.map((pos) => ({
-      ...pos,
-      account_name: acc.name,
-      account_id: acc.account_id,
-    }))
+    acc.open_positions.map((pos) => ({ ...pos, account_name: acc.name, account_id: acc.account_id }))
   );
 
   const closed   = trades.filter((t) => !t.is_open);
@@ -52,6 +255,7 @@ export default function AdminTradesPage() {
 
   return (
     <div className="p-8">
+      {/* Page header */}
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="font-sans font-semibold text-2xl text-text">Trades</h1>
@@ -62,16 +266,12 @@ export default function AdminTradesPage() {
             </span>
           </p>
         </div>
-
         <div className="flex items-center bg-surface border border-border rounded-lg p-1 gap-1">
           {(['live', 'history'] as Tab[]).map((t) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded-md text-sm font-sans font-medium transition-colors ${
-                tab === t
-                  ? 'bg-green/10 text-green border border-green/20'
-                  : 'text-muted hover:text-text'
+              key={t} onClick={() => setTab(t)}
+              className={`px-4 py-1.5 rounded-md text-sm font-sans font-medium transition-colors cursor-pointer ${
+                tab === t ? 'bg-green/10 text-green border border-green/20' : 'text-muted hover:text-text'
               }`}
             >
               {t === 'live' ? `Live (${livePositions.length})` : `History (${closed.length})`}
@@ -79,6 +279,9 @@ export default function AdminTradesPage() {
           ))}
         </div>
       </div>
+
+      {/* Broadcast panel — always visible at top */}
+      <BroadcastPanel />
 
       {error && <p className="text-red font-sans mb-4">{error}</p>}
 

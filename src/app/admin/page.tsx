@@ -1,21 +1,30 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getOverview, OverviewResponse, AccountSnapshot, getAccounts, Account } from '@/lib/api';
 import { fmtPnl } from '@/lib/utils';
 import { MetricCard }       from '@/components/ui/MetricCard';
 import { AccountPnlBars }   from '@/components/charts/AccountPnlBars';
 import { TradingDataPanel } from '@/components/TradingDataPanel';
-import { Users, Activity, TrendingUp, Layers, ChevronDown, Wallet } from 'lucide-react';
+import { Users, Activity, TrendingUp, Layers, ChevronDown, Wallet, RefreshCw } from 'lucide-react';
 
 export default function AdminOverview() {
-  const [data, setData]         = useState<OverviewResponse | null>(null);
-  const [error, setError]       = useState('');
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [data, setData]           = useState<OverviewResponse | null>(null);
+  const [error, setError]         = useState('');
+  const [accounts, setAccounts]   = useState<Account[]>([]);
+  const [expanded, setExpanded]   = useState<string | null>(null);
+  const [balOpen, setBalOpen]     = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([getOverview(), getAccounts()])
+      .then(([ov, ac]) => { setData(ov); setAccounts(ac); })
+      .catch((e) => setError(e.message))
+      .finally(() => setRefreshing(false));
+  }, []);
 
   useEffect(() => {
-    getOverview().then(setData).catch((e) => setError(e.message));
-    getAccounts().then(setAccounts).catch(() => {});
+    refresh();
     const interval = setInterval(() => {
       getOverview().then(setData).catch(() => {});
     }, 15_000);
@@ -31,27 +40,73 @@ export default function AdminOverview() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="font-sans font-semibold text-2xl text-text">Overview</h1>
-        <p className="text-muted text-sm font-sans mt-1">Real-time across all managed accounts</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="font-sans font-semibold text-2xl text-text">Overview</h1>
+          <p className="text-muted text-sm font-sans mt-1">Real-time across all managed accounts</p>
+        </div>
+        <button
+          onClick={refresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:border-green/40 transition-colors text-sm font-sans cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+          {refreshing ? 'Refreshing…' : 'Refresh'}
+        </button>
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-2">
         <MetricCard label="Total Accounts"  value={String(data.total_accounts)}  icon={<Users size={16} />} />
         <MetricCard label="Active Accounts" value={String(data.active_accounts)} icon={<Activity size={16} />} />
-        <MetricCard
-          label="Total Balance"
-          value={data.total_balance > 0 ? `$${data.total_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
-          icon={<Wallet size={16} />}
-          sub="All accounts USDT"
-        />
+
+        {/* Clickable Total Balance card */}
+        <div
+          onClick={() => setBalOpen(o => !o)}
+          className={`bg-surface border rounded-xl p-5 flex flex-col gap-2 cursor-pointer transition-colors duration-200 ${balOpen ? 'border-green/40' : 'border-border hover:border-green/30'}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-muted text-sm font-sans">Total Balance</span>
+            <div className="flex items-center gap-1.5">
+              <Wallet size={14} className="text-muted" />
+              <ChevronDown size={12} className={`text-muted transition-transform duration-200 ${balOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+          <span className="font-mono text-2xl font-semibold text-text">
+            {data.total_balance > 0 ? `$${data.total_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+          </span>
+          <span className="text-muted text-xs font-sans">Click to see per-account</span>
+        </div>
+
         <MetricCard
           label="Daily P&L" value={fmtPnl(data.total_daily_pnl)}
           positive={pnlPositive} icon={<TrendingUp size={16} />}
         />
         <MetricCard label="Open Positions" value={String(totalOpen)} icon={<Layers size={16} />} />
       </div>
+
+      {/* Per-account balance breakdown */}
+      {balOpen && (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4 lg:col-start-3">
+          <div className="lg:col-start-3 lg:col-span-3 col-span-2 bg-elevated border border-green/20 rounded-xl p-4">
+            <p className="text-[11px] text-muted font-sans uppercase tracking-wide mb-3">Balance by Account</p>
+            <div className="space-y-2">
+              {data.accounts.map(acc => (
+                <div key={acc.account_id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${acc.is_active ? 'bg-green' : 'bg-muted'}`} />
+                    <span className="text-text text-sm font-sans">{acc.name}</span>
+                    {!acc.is_active && <span className="text-[10px] text-muted font-mono">(paused)</span>}
+                  </div>
+                  <span className="font-mono text-sm font-semibold text-text">
+                    {acc.balance > 0 ? `$${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">

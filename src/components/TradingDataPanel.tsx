@@ -10,7 +10,7 @@ import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 
 const TABS = ['Positions', 'Open Orders', 'Order History', 'Trade History', 'Position History', 'Transaction History'] as const;
 type Tab = typeof TABS[number];
-const SYMBOLS = ['ALL', 'XRP', 'LINK', 'SUI', 'HYPE', 'OP', 'NEAR', 'TIA'];
+const SYMBOLS = ['ALL', 'LINK', 'SUI', 'HYPE', 'NEAR', 'OP', 'TIA'];
 
 function toFullSym(base: string, exchange: string) {
   return exchange === 'hyperliquid' ? `${base}/USDC:USDC` : `${base}/USDT:USDT`;

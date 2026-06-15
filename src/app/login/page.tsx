@@ -19,6 +19,7 @@ export default function LoginPage() {
       const data = await login(email, password);
       localStorage.setItem('vevi_token',      data.access_token);
       localStorage.setItem('vevi_role',       data.role);
+      localStorage.setItem('vevi_email',      email);
       localStorage.setItem('vevi_account_id', data.account_id || '');
       router.replace(data.role === 'admin' ? '/admin' : '/member');
     } catch (err: any) {

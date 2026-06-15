@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import {
-  getAccounts, getAccountSnap, pauseAccount, activateAccount, deleteAccount,
+  getAccounts, getAccountSnap, getOverview, pauseAccount, activateAccount, deleteAccount,
   addAccount, updateAccount, Account, AccountSnapshot, OpenPosition,
 } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
@@ -19,9 +19,22 @@ export default function AccountsPage() {
   const [editAcc,  setEditAcc]        = useState<Account | null>(null);
   const [loading,  setLoading]        = useState(false);
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
+  // account_id → current balance (live, polled with overview)
+  const [balances, setBalances]       = useState<Record<string, number>>({});
 
-  const reload = () => getAccounts().then(setAccounts);
-  useEffect(() => { reload(); }, []);
+  const reload = () => Promise.all([
+    getAccounts().then(setAccounts),
+    getOverview().then((o) => {
+      const m: Record<string, number> = {};
+      for (const a of o.accounts) m[a.account_id] = a.balance;
+      setBalances(m);
+    }).catch(() => {}),
+  ]);
+  useEffect(() => {
+    reload();
+    const t = setInterval(reload, 15_000);   // refresh balances every 15s
+    return () => clearInterval(t);
+  }, []);
 
   async function openDetail(id: string) {
     const snap = await getAccountSnap(id);
@@ -65,17 +78,89 @@ export default function AccountsPage() {
         </button>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
-        <table className="w-full text-sm font-sans min-w-[640px]">
+      {/* ── Mobile: stacked cards (<md) ──────────────────────────────────── */}
+      <div className="md:hidden space-y-3">
+        {accounts.map((acc) => {
+          const bal = balances[acc.id];
+          return (
+            <div
+              key={acc.id}
+              onClick={() => openDetail(acc.id)}
+              className="bg-surface border border-border rounded-xl p-4 active:bg-elevated/50 transition-colors cursor-pointer"
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-text font-medium truncate">{acc.name}</p>
+                  <p className="text-muted text-xs truncate">{acc.email}</p>
+                </div>
+                <Badge variant={acc.is_active ? 'active' : 'paused'}>
+                  {acc.is_active ? 'Active' : 'Paused'}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mb-3 pt-3 border-t border-border/40">
+                <div>
+                  <p className="text-muted text-[10px] uppercase tracking-wide mb-0.5">Balance</p>
+                  <p className="font-mono font-semibold text-sm text-text">
+                    {bal != null ? `$${bal.toFixed(2)}` : '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted text-[10px] uppercase tracking-wide mb-0.5">Exchange</p>
+                  <p className="font-mono text-xs text-text uppercase">{acc.exchange}</p>
+                </div>
+                <div>
+                  <p className="text-muted text-[10px] uppercase tracking-wide mb-0.5">Created</p>
+                  <p className="text-muted text-[11px]">{fmtDate(acc.created_at)}</p>
+                </div>
+              </div>
+              <div
+                className="flex items-center gap-3 pt-2 border-t border-border/40"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {acc.is_active ? (
+                  <button onClick={() => handlePause(acc.id)}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-sans text-red border border-red/30 bg-red/5 hover:bg-red/10 active:scale-95 transition">
+                    <PauseCircle size={12} /> Pause
+                  </button>
+                ) : (
+                  <button onClick={() => handleActivate(acc.id)}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-sans text-green border border-green/30 bg-green/5 hover:bg-green/10 active:scale-95 transition">
+                    <PlayCircle size={12} /> Activate
+                  </button>
+                )}
+                <button onClick={() => setEditAcc(acc)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-sans text-muted border border-border hover:text-text hover:border-text/30 active:scale-95 transition">
+                  <Pencil size={12} /> Edit
+                </button>
+                <button onClick={() => handleDelete(acc.id)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-sans text-red/80 border border-red/20 hover:bg-red/10 active:scale-95 transition ml-auto">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {accounts.length === 0 && (
+          <div className="bg-surface border border-border rounded-xl px-5 py-12 text-center text-muted text-sm">
+            No accounts yet. Tap &ldquo;Add Account&rdquo; to start.
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop: table (≥md) ─────────────────────────────────────────── */}
+      <div className="hidden md:block bg-surface border border-border rounded-xl overflow-x-auto">
+        <table className="w-full text-sm font-sans">
           <thead>
             <tr className="border-b border-border">
-              {['Account', 'Exchange', 'Status', 'Daily P&L', 'Open Pos', 'Created', 'Actions'].map((h) => (
+              {['Account', 'Exchange', 'Status', 'Balance', 'Daily P&L', 'Created', 'Actions'].map((h) => (
                 <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {accounts.map((acc) => (
+            {accounts.map((acc) => {
+              const bal = balances[acc.id];
+              return (
               <tr
                 key={acc.id}
                 className="border-b border-border/50 hover:bg-elevated/50 transition-colors duration-100 cursor-pointer"
@@ -91,7 +176,9 @@ export default function AccountsPage() {
                     {acc.is_active ? 'Active' : 'Paused'}
                   </Badge>
                 </td>
-                <td className="px-5 py-3.5 font-mono text-muted">—</td>
+                <td className="px-5 py-3.5 font-mono text-text">
+                  {bal != null ? `$${bal.toFixed(2)}` : '—'}
+                </td>
                 <td className="px-5 py-3.5 font-mono text-muted">—</td>
                 <td className="px-5 py-3.5 text-muted text-xs">{fmtDate(acc.created_at)}</td>
                 <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
@@ -119,7 +206,8 @@ export default function AccountsPage() {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {accounts.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-5 py-12 text-center text-muted text-sm">

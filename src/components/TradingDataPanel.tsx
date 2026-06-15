@@ -1,13 +1,14 @@
 'use client';
 import { useState, useCallback } from 'react';
-import { X, RefreshCw, AlertTriangle } from 'lucide-react';
+import { X, RefreshCw, AlertTriangle, Download } from 'lucide-react';
 import {
   getOpenOrders, getOrderHistory, getPositionHistory, getTransactions,
-  getTrades, closeAll, closePosition,
+  getTrades, closeAll, closePosition, getAccounts,
   OpenPosition, ExOrder, ExTrade, ExTx, Trade,
 } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { STRATEGY_BASES } from '@/lib/symbols';
+import { exportTradesCSV, exportExTradesCSV } from '@/lib/csvExport';
 
 const TABS = ['Positions', 'Open Orders', 'Order History', 'Trade History', 'Position History', 'Transaction History'] as const;
 type Tab = typeof TABS[number];
@@ -160,9 +161,43 @@ export function TradingDataPanel({ accountId, exchange, openPositions, canTrade,
               onClick={() => loadTab(tab, true)}
               disabled={loading}
               className="p-1.5 rounded-lg text-muted hover:text-text hover:bg-elevated transition-colors cursor-pointer"
+              title="Refresh"
             >
               <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             </button>
+            {(tab === 'Trade History' || tab === 'Position History') && (
+              <button
+                onClick={async () => {
+                  // Get account name/email for the CSV header
+                  let accountName = 'account';
+                  let accountEmail = '';
+                  try {
+                    const accs = await getAccounts();
+                    const found = accs.find(a => a.id === accountId);
+                    if (found) {
+                      accountName  = found.name;
+                      accountEmail = found.email;
+                    }
+                  } catch { /* fall back to defaults */ }
+
+                  const role = (typeof window !== 'undefined' && localStorage.getItem('vevi_role') === 'admin')
+                    ? 'admin' : 'member';
+                  const data = cache[tab] ?? [];
+                  const meta = { accountName, accountEmail, exporterRole: role as 'admin' | 'member' };
+
+                  if (tab === 'Trade History') {
+                    exportTradesCSV(data as Trade[], meta);
+                  } else {
+                    exportExTradesCSV(data as ExTrade[], meta);
+                  }
+                }}
+                disabled={!cache[tab] || (cache[tab]?.length ?? 0) === 0}
+                title="Download CSV with PnL summary (tax)"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-elevated text-text border border-border hover:border-green/40 hover:text-green transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Download size={13} /> CSV
+              </button>
+            )}
             {canTrade && openPositions.length > 0 && (
               <button
                 onClick={() => setConfirmClose(true)}
@@ -235,42 +270,69 @@ function PositionsTable({ rows, canTrade, onClose, closingPos }: {
 }) {
   if (!rows.length) return <Empty text="No open positions" />;
   return (
-    <table className="w-full text-xs font-sans">
-      <thead>
-        <tr className="border-b border-border/60">
-          {['Symbol', 'Side', 'Entry', 'Trail SL', 'Peak', 'Bars', canTrade ? 'Action' : ''].filter(Boolean).map(h => (
-            <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(p => (
-          <tr key={p.symbol} className="border-b border-border/30 hover:bg-elevated/40">
-            <td className="px-4 py-2 font-mono text-text font-medium">{symBase(p.symbol)}</td>
-            <td className="px-4 py-2">
-              <span className={`font-mono font-semibold ${p.side === 'long' ? 'text-green' : 'text-red'}`}>
-                {p.side?.toUpperCase()}
-              </span>
-            </td>
-            <td className="px-4 py-2 font-mono text-text">{fmtPrice(p.entry)}</td>
-            <td className="px-4 py-2 font-mono text-muted">{p.trail_sl ? fmtPrice(p.trail_sl) : '—'}</td>
-            <td className="px-4 py-2 font-mono text-muted">{p.peak ? fmtPrice(p.peak) : '—'}</td>
-            <td className="px-4 py-2 font-mono text-muted">{p.bar_count}</td>
-            {canTrade && (
-              <td className="px-4 py-2">
-                <button
-                  onClick={() => onClose(p.symbol)}
-                  disabled={closingPos === p.symbol}
-                  className="px-2.5 py-1 rounded text-[11px] font-medium bg-red/10 text-red border border-red/20 hover:bg-red/20 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {closingPos === p.symbol ? '…' : 'Close'}
-                </button>
-              </td>
-            )}
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs font-sans min-w-[760px]">
+        <thead>
+          <tr className="border-b border-border/60">
+            {['Symbol', 'Side', 'Entry', 'Trail SL', 'Peak', 'Unrealized', 'Bars', canTrade ? 'Action' : ''].filter(Boolean).map(h => (
+              <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map(p => {
+            const uUsdt = p.unrealized_usdt;
+            const uPct  = p.unrealized_pct;
+            const sign  = (uUsdt ?? 0) >= 0 ? '+' : '';
+            const color = uUsdt == null ? 'text-muted' : (uUsdt >= 0 ? 'text-green' : 'text-red');
+            return (
+              <tr key={p.symbol} className="border-b border-border/30 hover:bg-elevated/40">
+                <td className="px-4 py-2 font-mono text-text font-medium">
+                  {symBase(p.symbol)}
+                  {p.trail_tightened && (
+                    <span className="ml-1.5 text-[9px] font-mono font-bold bg-green/15 text-green border border-green/30 rounded px-1 py-0.5" title="CHoCH tighten fired — trail SL is 0.5R behind peak">
+                      ◢
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-2">
+                  <span className={`font-mono font-semibold ${p.side === 'long' ? 'text-green' : 'text-red'}`}>
+                    {p.side?.toUpperCase()}
+                  </span>
+                </td>
+                <td className="px-4 py-2 font-mono text-text">{fmtPrice(p.entry)}</td>
+                <td className="px-4 py-2 font-mono text-muted">{p.trail_sl ? fmtPrice(p.trail_sl) : '—'}</td>
+                <td className="px-4 py-2 font-mono text-muted">{p.peak ? fmtPrice(p.peak) : '—'}</td>
+                <td className={`px-4 py-2 font-mono font-semibold ${color}`}>
+                  {uUsdt == null ? '—' : (
+                    <>
+                      {sign}${uUsdt.toFixed(3)}
+                      {uPct != null && (
+                        <span className="text-muted font-normal ml-1 text-[10px]">
+                          ({sign}{uPct.toFixed(2)}%)
+                        </span>
+                      )}
+                    </>
+                  )}
+                </td>
+                <td className="px-4 py-2 font-mono text-muted">{p.bar_count}</td>
+                {canTrade && (
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => onClose(p.symbol)}
+                      disabled={closingPos === p.symbol}
+                      className="px-2.5 py-1 rounded text-[11px] font-medium bg-red/10 text-red border border-red/20 hover:bg-red/20 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {closingPos === p.symbol ? '…' : 'Close'}
+                    </button>
+                  </td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

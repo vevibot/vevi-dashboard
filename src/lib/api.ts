@@ -106,9 +106,13 @@ export interface AddAccountBody {
 
 export interface OpenPosition {
   symbol: string; side: string; entry: number; sl: number; tp: number | null;
+  size: number; notional: number;
   peak: number | null; trail_sl: number | null; is_trail: boolean;
+  trail_tightened?: boolean;
   bar_count: number; opened_at: string | null;
-  current_price: number | null; unrealized_pct: number | null;
+  current_price: number | null;
+  unrealized_pct: number | null;
+  unrealized_usdt: number | null;
 }
 
 export interface AccountSnapshot {

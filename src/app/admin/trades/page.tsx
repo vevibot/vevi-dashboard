@@ -11,7 +11,6 @@ import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download
 import { MANUAL_TRADE_BASES_UNIQUE, toUsdtPerp, isStrategySymbol } from '@/lib/symbols';
 import { exportTradesCSV } from '@/lib/csvExport';
 import type { Trade } from '@/lib/api';
-import { useState as useReactState } from 'react';
 
 // Broadcast trade picker — full manual catalogue, not limited to strategy 10.
 const SYMBOLS = MANUAL_TRADE_BASES_UNIQUE.map(toUsdtPerp);
@@ -377,7 +376,7 @@ function HistoryTab({ trades, allTrades, accounts }: {
   allTrades: AdminTrade[];
   accounts: AcctOpt[];
 }) {
-  const [selectedAcc, setSelectedAcc] = useReactState<string>('all');   // 'all' or account_id
+  const [selectedAcc, setSelectedAcc] = useState<string>('all');   // 'all' or account_id
 
   // Filter both the closed-trade list and the all-trade (for equity chart)
   const filteredClosed = selectedAcc === 'all'

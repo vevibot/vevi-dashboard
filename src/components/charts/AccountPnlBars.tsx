@@ -10,10 +10,14 @@ interface Props { accounts: AccountSnapshot[]; }
 export function AccountPnlBars({ accounts }: Props) {
   const data = accounts
     .filter((a) => a.is_active)
-    .map((a) => ({
-      name: a.name.split(' ')[0],
-      pnl:  Number.isFinite(a.daily_pnl) ? +Number(a.daily_pnl).toFixed(2) : 0,
-    }));
+    .map((a) => {
+      // Prefer BingX-sourced 24h realized PnL; fall back to Vevi internal.
+      const raw = a.realized_pnl_24h != null ? a.realized_pnl_24h : a.daily_pnl;
+      return {
+        name: a.name.split(' ')[0],
+        pnl:  Number.isFinite(raw) ? +Number(raw).toFixed(2) : 0,
+      };
+    });
 
   if (data.length === 0) return null;
 

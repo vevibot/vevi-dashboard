@@ -34,7 +34,13 @@ export default function AdminOverview() {
   if (error) return <PageError msg={error} />;
   if (!data)  return <PageLoading />;
 
-  const pnlPositive = data.total_daily_pnl >= 0;
+  // Prefer BingX-sourced 24h realized PnL (matches what user sees on exchange).
+  // Falls back to Vevi internal daily_pnl only when exchange unreachable.
+  const displayPnl = data.total_realized_pnl_24h != null
+    ? data.total_realized_pnl_24h
+    : data.total_daily_pnl;
+  const pnlSource  = data.total_realized_pnl_24h != null ? 'BINGX 24h' : 'VEVI INTERNAL';
+  const pnlPositive = displayPnl >= 0;
   const totalOpen   = data.accounts.reduce((s, a) => s + a.open_count, 0);
   const activeAccs  = data.accounts.filter((a) => a.is_active);
 
@@ -78,10 +84,14 @@ export default function AdminOverview() {
           <span className="text-muted text-xs font-sans">Click to see per-account</span>
         </div>
 
-        <MetricCard
-          label="Daily P&L" value={fmtPnl(data.total_daily_pnl)}
-          positive={pnlPositive} icon={<TrendingUp size={16} />}
-        />
+        <div className="relative">
+          <MetricCard
+            label={`Daily P&L · ${pnlSource}`}
+            value={fmtPnl(displayPnl)}
+            positive={pnlPositive}
+            icon={<TrendingUp size={16} />}
+          />
+        </div>
         <MetricCard label="Open Positions" value={String(totalOpen)} icon={<Layers size={16} />} />
       </div>
 
@@ -110,13 +120,16 @@ export default function AdminOverview() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-        {/* Account P&L bars */}
+        {/* Account P&L bars — uses BingX 24h realized data when available */}
         <div className="bg-surface border border-border rounded-xl p-5">
-          <div className="mb-4">
-            <p className="text-muted text-xs font-sans uppercase tracking-wide">Today's P&L by Account</p>
-            <p className={`font-mono font-semibold text-lg mt-0.5 ${pnlPositive ? 'text-green' : 'text-red'}`}>
-              {fmtPnl(data.total_daily_pnl)}
-            </p>
+          <div className="mb-4 flex items-baseline justify-between">
+            <div>
+              <p className="text-muted text-xs font-sans uppercase tracking-wide">24h P&L by Account</p>
+              <p className={`font-mono font-semibold text-lg mt-0.5 ${pnlPositive ? 'text-green' : 'text-red'}`}>
+                {fmtPnl(displayPnl)}
+              </p>
+            </div>
+            <span className="text-[9px] font-mono text-muted">{pnlSource}</span>
           </div>
           <AccountPnlBars accounts={data.accounts} />
         </div>
@@ -136,8 +149,8 @@ export default function AdminOverview() {
                         ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     )}
-                    <span className={`font-mono text-xs font-semibold ${acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}`}>
-                      {fmtPnl(acc.daily_pnl)}
+                    <span className={`font-mono text-xs font-semibold ${(acc.realized_pnl_24h ?? acc.daily_pnl) >= 0 ? 'text-green' : 'text-red'}`}>
+                      {fmtPnl(acc.realized_pnl_24h ?? acc.daily_pnl)}
                     </span>
                     <span className="text-muted text-xs">{acc.open_count} open</span>
                     <span className="text-muted text-xs">{acc.daily_trades} trades</span>
@@ -188,8 +201,8 @@ export default function AdminOverview() {
                     </div>
                     <div>
                       <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">P&L</p>
-                      <p className={`font-mono font-semibold text-xs ${acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}`}>
-                        {fmtPnl(acc.daily_pnl)}
+                      <p className={`font-mono font-semibold text-xs ${(acc.realized_pnl_24h ?? acc.daily_pnl) >= 0 ? 'text-green' : 'text-red'}`}>
+                        {fmtPnl(acc.realized_pnl_24h ?? acc.daily_pnl)}
                       </p>
                     </div>
                     <div>
@@ -263,8 +276,8 @@ export default function AdminOverview() {
                         {acc.balance > 0 ? `$${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                       </td>
                       <td className="px-5 py-3.5 font-mono">
-                        <span className={acc.daily_pnl >= 0 ? 'text-green' : 'text-red'}>
-                          {fmtPnl(acc.daily_pnl)}
+                        <span className={(acc.realized_pnl_24h ?? acc.daily_pnl) >= 0 ? 'text-green' : 'text-red'}>
+                          {fmtPnl(acc.realized_pnl_24h ?? acc.daily_pnl)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 font-mono text-text">{acc.open_count}</td>

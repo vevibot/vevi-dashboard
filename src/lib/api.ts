@@ -146,12 +146,20 @@ export interface OpenPosition {
 export interface AccountSnapshot {
   account_id: string; name: string; email: string; is_active: boolean;
   balance: number; daily_pnl: number; daily_trades: number;
+  // Exchange-sourced 24h fields — null if exchange call failed
+  realized_pnl_24h:  number | null;
+  fees_24h:          number | null;
+  closed_trades_24h: number | null;
   open_positions: OpenPosition[]; open_count: number;
 }
 
 export interface OverviewResponse {
   total_accounts: number; active_accounts: number;
   total_daily_pnl: number; total_balance: number;
+  // Exchange-sourced 24h totals — null if no account succeeded
+  total_realized_pnl_24h: number | null;
+  total_fees_24h:         number | null;
+  total_closed_24h:       number | null;
   accounts: AccountSnapshot[];
 }
 

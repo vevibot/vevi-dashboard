@@ -1,18 +1,18 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { getOverview, OverviewResponse, AccountSnapshot, getAccounts, Account } from '@/lib/api';
 import { fmtPnl } from '@/lib/utils';
 import { MetricCard }       from '@/components/ui/MetricCard';
 import { AccountPnlBars }   from '@/components/charts/AccountPnlBars';
 import { TradingDataPanel } from '@/components/TradingDataPanel';
-import { Users, Activity, TrendingUp, Layers, ChevronDown, Wallet, RefreshCw } from 'lucide-react';
+import { Users, Activity, TrendingUp, Layers, ChevronDown, ChevronRight, Wallet, RefreshCw } from 'lucide-react';
 
 export default function AdminOverview() {
   const [data, setData]           = useState<OverviewResponse | null>(null);
   const [error, setError]         = useState('');
   const [accounts, setAccounts]   = useState<Account[]>([]);
   const [expanded, setExpanded]   = useState<string | null>(null);
-  const [balOpen, setBalOpen]     = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = useCallback(() => {
@@ -66,22 +66,14 @@ export default function AdminOverview() {
         <MetricCard label="Total Accounts"  value={String(data.total_accounts)}  icon={<Users size={16} />} />
         <MetricCard label="Active Accounts" value={String(data.active_accounts)} icon={<Activity size={16} />} />
 
-        {/* Clickable Total Balance card */}
-        <div
-          onClick={() => setBalOpen(o => !o)}
-          className={`bg-surface border rounded-xl p-5 flex flex-col gap-2 cursor-pointer transition-colors duration-200 ${balOpen ? 'border-green/40' : 'border-border hover:border-green/30'}`}
-        >
+        <div className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-muted text-sm font-sans">Total Balance</span>
-            <div className="flex items-center gap-1.5">
-              <Wallet size={14} className="text-muted" />
-              <ChevronDown size={12} className={`text-muted transition-transform duration-200 ${balOpen ? 'rotate-180' : ''}`} />
-            </div>
+            <Wallet size={14} className="text-muted" />
           </div>
           <span className="font-mono text-xl md:text-2xl font-semibold text-text leading-tight break-all">
             {data.total_balance > 0 ? `$${data.total_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
           </span>
-          <span className="text-muted text-xs font-sans">Click to see per-account</span>
         </div>
 
         <div className="relative">
@@ -95,28 +87,6 @@ export default function AdminOverview() {
         <MetricCard label="Open Positions" value={String(totalOpen)} icon={<Layers size={16} />} />
       </div>
 
-      {/* Per-account balance breakdown */}
-      {balOpen && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4 lg:col-start-3">
-          <div className="lg:col-start-3 lg:col-span-3 col-span-2 bg-elevated border border-green/20 rounded-xl p-4">
-            <p className="text-[11px] text-muted font-sans uppercase tracking-wide mb-3">Balance by Account</p>
-            <div className="space-y-2">
-              {data.accounts.map(acc => (
-                <div key={acc.account_id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${acc.is_active ? 'bg-green' : 'bg-muted'}`} />
-                    <span className="text-text text-sm font-sans">{acc.name}</span>
-                    {!acc.is_active && <span className="text-[10px] text-muted font-mono">(paused)</span>}
-                  </div>
-                  <span className="font-mono text-sm font-semibold text-text">
-                    {acc.balance > 0 ? `$${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
@@ -139,10 +109,17 @@ export default function AdminOverview() {
           <p className="text-muted text-xs font-sans uppercase tracking-wide mb-4">Active Accounts Snapshot</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {activeAccs.map((acc) => (
-              <div key={acc.account_id} className="bg-elevated rounded-lg p-3 flex items-start gap-3">
+              <Link
+                href={`/admin/accounts/detail?id=${acc.account_id}`}
+                key={acc.account_id}
+                className="bg-elevated rounded-lg p-3 flex items-start gap-3 cursor-pointer hover:bg-elevated/70 border border-transparent hover:border-green/30 transition-colors group"
+              >
                 <div className="w-2 h-2 rounded-full bg-green mt-1.5 animate-pulse flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-text font-medium text-sm truncate">{acc.name}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-text font-medium text-sm truncate group-hover:text-green transition-colors">{acc.name}</p>
+                    <ChevronRight size={14} className="text-muted group-hover:text-green shrink-0 transition-colors" />
+                  </div>
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
                     {acc.balance > 0 && (
                       <span className="font-mono text-xs text-text font-semibold">
@@ -156,7 +133,7 @@ export default function AdminOverview() {
                     <span className="text-muted text-xs">{acc.daily_trades} trades</span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
             {activeAccs.length === 0 && (
               <div className="col-span-2 py-6 text-center text-muted text-sm">

@@ -12,7 +12,7 @@ export function AccountPnlBars({ accounts }: Props) {
     .filter((a) => a.is_active)
     .map((a) => ({
       name: a.name.split(' ')[0],
-      pnl:  +a.daily_pnl.toFixed(2),
+      pnl:  Number.isFinite(a.daily_pnl) ? +Number(a.daily_pnl).toFixed(2) : 0,
     }));
 
   if (data.length === 0) return null;

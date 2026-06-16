@@ -4,6 +4,7 @@ import { getMyDashboard, getMyTrades, AccountSnapshot, Trade, OpenPosition } fro
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
+import { ExchangePnlPanel } from '@/components/ExchangePnlPanel';
 import { ListOrdered } from 'lucide-react';
 
 type Tab = 'live' | 'history';
@@ -154,11 +155,14 @@ function LiveTab({ positions }: { positions: OpenPosition[] }) {
 function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl: number; allTrades: Trade[] }) {
   return (
     <>
+      {/* Exchange-side truth — sourced from BingX directly */}
+      <ExchangePnlPanel days={7} />
+
       {allTrades.length > 0 && (
         <div className="bg-surface border border-border rounded-xl p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-muted text-xs font-sans uppercase tracking-wide">Cumulative P&L</p>
+              <p className="text-muted text-xs font-sans uppercase tracking-wide">Vevi Cumulative P&L (internal)</p>
               <p className={`font-mono font-semibold text-lg mt-0.5 ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
                 {fmtPnl(totalPnl)}
               </p>

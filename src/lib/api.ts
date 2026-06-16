@@ -75,6 +75,34 @@ export const getMyTrades    = async (limit = 50) => {
 export const getAdminTrades = (limit = 200) =>
   req<{ trades: AdminTrade[] }>(`/dashboard/admin/trades?limit=${limit}`);
 
+// ── Exchange-side realized PnL (source of truth) ──────────────────────────────
+export interface ExchangePnlBySymbol {
+  symbol: string;
+  pnl: number;
+  count: number;
+  wins: number;
+  losses: number;
+}
+export interface ExchangePnlSummary {
+  days:           number;
+  realized_pnl:   number;
+  gross_profit:   number;
+  gross_loss:     number;
+  fees:           number;
+  volume:         number;
+  closed_trades:  number;
+  wins:           number;
+  losses:         number;
+  win_rate:       number;
+  profit_factor:  number | null;
+  by_symbol:      ExchangePnlBySymbol[];
+  error?:         string;
+}
+export const getExchangePnl   = (account_id: string, days = 7) =>
+  req<ExchangePnlSummary>(`/dashboard/accounts/${account_id}/exchange-pnl?days=${days}`);
+export const getMyExchangePnl = (days = 7) =>
+  req<ExchangePnlSummary>(`/dashboard/me/exchange-pnl?days=${days}`);
+
 // ── Trading (trader/admin only) ───────────────────────────────────────────────
 interface OrderBase { account_id: string; symbol: string; leverage?: number; sl?: number; tp?: number; }
 export interface MarketOrderBody extends OrderBase { side: 'buy'|'sell'; usdt_amount: number; }

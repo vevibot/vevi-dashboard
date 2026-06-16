@@ -7,9 +7,10 @@ import {
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
-import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download } from 'lucide-react';
+import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download, Shield } from 'lucide-react';
 import { MANUAL_TRADE_BASES_UNIQUE, toUsdtPerp, isStrategySymbol } from '@/lib/symbols';
 import { exportTradesCSV } from '@/lib/csvExport';
+import { ExchangePnlPanel } from '@/components/ExchangePnlPanel';
 import type { Trade } from '@/lib/api';
 
 // Broadcast trade picker — full manual catalogue, not limited to strategy 10.
@@ -403,6 +404,25 @@ function HistoryTab({ trades, allTrades, accounts }: {
 
   return (
     <>
+      {/* Exchange-side truth (BingX) — only shown when an account is selected */}
+      {selectedAcc === 'all' ? (
+        accounts.length > 0 && (
+          <div className="bg-surface border border-yellow/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <Shield size={16} className="text-yellow mt-0.5 shrink-0" />
+            <div>
+              <p className="text-text text-sm font-sans font-medium">
+                Exchange-side P&L is per-account
+              </p>
+              <p className="text-muted text-xs font-sans mt-0.5">
+                Pick an account below to see BingX-sourced realized P&L (the source of truth that matches what you see on the exchange directly).
+              </p>
+            </div>
+          </div>
+        )
+      ) : (
+        <ExchangePnlPanel accountId={selectedAcc} days={7} />
+      )}
+
       {/* Account picker + summary card */}
       {allTrades.length > 0 && (
         <div className="bg-surface border border-border rounded-xl p-5 mb-6">

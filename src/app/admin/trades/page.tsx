@@ -7,8 +7,11 @@ import {
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
-import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown } from 'lucide-react';
+import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download } from 'lucide-react';
 import { MANUAL_TRADE_BASES_UNIQUE, toUsdtPerp, isStrategySymbol } from '@/lib/symbols';
+import { exportTradesCSV } from '@/lib/csvExport';
+import type { Trade } from '@/lib/api';
+import { useState as useReactState } from 'react';
 
 // Broadcast trade picker — full manual catalogue, not limited to strategy 10.
 const SYMBOLS = MANUAL_TRADE_BASES_UNIQUE.map(toUsdtPerp);
@@ -295,7 +298,11 @@ export default function AdminTradesPage() {
       ) : tab === 'live' ? (
         <LiveTab positions={livePositions} />
       ) : (
-        <HistoryTab trades={closed} totalPnl={totalPnl} allTrades={trades} />
+        <HistoryTab
+          trades={closed}
+          allTrades={trades}
+          accounts={(overview?.accounts ?? []).map(a => ({ id: a.account_id, name: a.name, email: a.email }))}
+        />
       )}
     </div>
   );
@@ -363,26 +370,101 @@ function LiveTab({ positions }: { positions: LivePos[] }) {
 
 // ── History tab ───────────────────────────────────────────────────────────────
 
-function HistoryTab({ trades, totalPnl, allTrades }: { trades: AdminTrade[]; totalPnl: number; allTrades: AdminTrade[] }) {
+interface AcctOpt { id: string; name: string; email: string; }
+
+function HistoryTab({ trades, allTrades, accounts }: {
+  trades: AdminTrade[];
+  allTrades: AdminTrade[];
+  accounts: AcctOpt[];
+}) {
+  const [selectedAcc, setSelectedAcc] = useReactState<string>('all');   // 'all' or account_id
+
+  // Filter both the closed-trade list and the all-trade (for equity chart)
+  const filteredClosed = selectedAcc === 'all'
+    ? trades
+    : trades.filter(t => t.account_id === selectedAcc);
+  const filteredAll = selectedAcc === 'all'
+    ? allTrades
+    : allTrades.filter(t => t.account_id === selectedAcc);
+  const filteredPnl = filteredClosed.reduce((s, t) => s + (t.pnl ?? 0), 0);
+
+  const selectedAcct = accounts.find(a => a.id === selectedAcc);
+  const headerLabel  = selectedAcc === 'all' ? 'All Accounts' : (selectedAcct?.name ?? '—');
+
+  function downloadCSV() {
+    if (filteredClosed.length === 0) return;
+    const meta = {
+      accountName:  selectedAcc === 'all' ? 'all-accounts' : (selectedAcct?.name ?? 'account'),
+      accountEmail: selectedAcc === 'all' ? '(combined across all accounts)' : (selectedAcct?.email ?? ''),
+      exporterRole: 'admin' as const,
+    };
+    // exportTradesCSV expects Trade[], AdminTrade extends Trade so it's compatible.
+    exportTradesCSV(filteredClosed as unknown as Trade[], meta);
+  }
+
   return (
     <>
+      {/* Account picker + summary card */}
       {allTrades.length > 0 && (
         <div className="bg-surface border border-border rounded-xl p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-muted text-[11px] font-sans uppercase tracking-wide">Filter:</span>
+              <button
+                onClick={() => setSelectedAcc('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-sans font-medium transition-colors cursor-pointer border ${
+                  selectedAcc === 'all'
+                    ? 'bg-green/10 border-green/40 text-green'
+                    : 'bg-elevated border-border text-muted hover:text-text'
+                }`}
+              >
+                All Accounts ({allTrades.filter(t => !t.is_open).length})
+              </button>
+              {accounts.map(a => {
+                const n = trades.filter(t => t.account_id === a.id).length;
+                if (n === 0) return null;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => setSelectedAcc(a.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-sans font-medium transition-colors cursor-pointer border ${
+                      selectedAcc === a.id
+                        ? 'bg-green/10 border-green/40 text-green'
+                        : 'bg-elevated border-border text-muted hover:text-text'
+                    }`}
+                  >
+                    {a.name} ({n})
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={downloadCSV}
+              disabled={filteredClosed.length === 0}
+              title="Download filtered trades as CSV with PnL summary (tax)"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-elevated text-text border border-border hover:border-green/40 hover:text-green transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              <Download size={13} /> CSV
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between mb-4 pt-3 border-t border-border/40">
             <div>
-              <p className="text-muted text-xs font-sans uppercase tracking-wide">Cumulative P&L — All Accounts</p>
-              <p className={`font-mono font-semibold text-lg mt-0.5 ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
-                {fmtPnl(totalPnl)}
+              <p className="text-muted text-xs font-sans uppercase tracking-wide">
+                Cumulative P&L — {headerLabel}
+              </p>
+              <p className={`font-mono font-semibold text-lg mt-0.5 ${filteredPnl >= 0 ? 'text-green' : 'text-red'}`}>
+                {fmtPnl(filteredPnl)}
               </p>
             </div>
-            <span className="text-xs text-muted font-sans">{trades.length} closed trades</span>
+            <span className="text-xs text-muted font-sans">{filteredClosed.length} closed trades</span>
           </div>
-          <EquityChart trades={allTrades} />
+          <EquityChart trades={filteredAll} />
         </div>
       )}
 
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm font-sans">
+      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
+        <table className="w-full text-sm font-sans min-w-[800px]">
           <thead>
             <tr className="border-b border-border">
               {['Account', 'Symbol', 'Side', 'Entry', 'Exit', 'P&L', 'Opened', 'Closed'].map((h) => (
@@ -391,7 +473,7 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: AdminTrade[]; tot
             </tr>
           </thead>
           <tbody>
-            {trades.map((t) => {
+            {filteredClosed.map((t) => {
               const side = t.side === 'buy' ? 'long' : 'short';
               const pnl  = t.pnl ?? 0;
               return (
@@ -411,11 +493,13 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: AdminTrade[]; tot
                 </tr>
               );
             })}
-            {trades.length === 0 && (
+            {filteredClosed.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-5 py-12 text-center">
                   <Briefcase size={28} className="text-muted mx-auto mb-2" />
-                  <p className="text-muted text-sm">No closed trades yet.</p>
+                  <p className="text-muted text-sm">
+                    No closed trades {selectedAcc === 'all' ? 'yet' : `for ${headerLabel}`}.
+                  </p>
                 </td>
               </tr>
             )}

@@ -320,32 +320,38 @@ function LiveTab({ positions }: { positions: LivePos[] }) {
     );
   }
 
+  // Group by symbol so each trading pair shows as one row
+  const bySymbol: Record<string, LivePos[]> = {};
+  for (const pos of positions) {
+    (bySymbol[pos.symbol] ??= []).push(pos);
+  }
+
   return (
     <div className="bg-surface border border-border rounded-xl overflow-x-auto">
       <table className="w-full text-sm font-sans min-w-[800px]">
         <thead>
           <tr className="border-b border-border">
-            {['Account', 'Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration'].map((h) => (
+            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration', 'Accounts'].map((h) => (
               <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {positions.map((pos) => {
-            const pct    = pos.unrealized_pct;
+          {Object.entries(bySymbol).map(([symbol, group]) => {
+            const rep    = group[0];
+            const sym    = symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '');
+            const pct    = rep.unrealized_pct;
             const pctPos = pct !== null && pct >= 0;
-            const sym    = pos.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '');
             return (
-              <tr key={`${pos.account_id}-${pos.symbol}`} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
-                <td className="px-5 py-3.5 text-text text-sm font-sans">{pos.account_name}</td>
-                <td className="px-5 py-3.5 font-mono font-medium text-text">
-                  {sym}
+              <tr key={symbol} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
+                <td className="px-5 py-3.5">
+                  <span className="font-mono font-semibold text-text">{sym}</span>
                   <span className="ml-2 text-[10px] bg-green/10 text-green border border-green/20 rounded px-1 py-0.5">OPEN</span>
                 </td>
-                <td className="px-5 py-3.5"><Badge variant={pos.side as 'long'|'short'}>{pos.side.toUpperCase()}</Badge></td>
-                <td className="px-5 py-3.5 font-mono text-text">{fmtPrice(pos.entry)}</td>
+                <td className="px-5 py-3.5"><Badge variant={rep.side as 'long'|'short'}>{rep.side.toUpperCase()}</Badge></td>
+                <td className="px-5 py-3.5 font-mono text-text">{fmtPrice(rep.entry)}</td>
                 <td className="px-5 py-3.5 font-mono text-text">
-                  {pos.current_price ? fmtPrice(pos.current_price) : <span className="text-muted">—</span>}
+                  {rep.current_price ? fmtPrice(rep.current_price) : <span className="text-muted">—</span>}
                 </td>
                 <td className="px-5 py-3.5 font-mono">
                   {pct !== null ? (
@@ -356,9 +362,17 @@ function LiveTab({ positions }: { positions: LivePos[] }) {
                     <span className="text-muted text-xs">syncing…</span>
                   )}
                 </td>
-                <td className="px-5 py-3.5 font-mono text-muted">{fmtPrice(pos.sl)}</td>
-                <td className="px-5 py-3.5 font-mono text-muted">{pos.tp ? fmtPrice(pos.tp) : '—'}</td>
-                <td className="px-5 py-3.5 text-muted text-xs">{duration(pos.opened_at)}</td>
+                <td className="px-5 py-3.5 font-mono text-muted">{fmtPrice(rep.sl)}</td>
+                <td className="px-5 py-3.5 font-mono text-muted">{rep.tp ? fmtPrice(rep.tp) : '—'}</td>
+                <td className="px-5 py-3.5 text-muted text-xs">{duration(rep.opened_at)}</td>
+                <td className="px-5 py-3.5">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-border text-xs font-mono font-semibold text-text">
+                    {group.length}
+                  </span>
+                  <p className="text-[11px] text-muted font-sans mt-0.5 max-w-[120px] truncate">
+                    {group.map(p => p.account_name).join(' · ')}
+                  </p>
+                </td>
               </tr>
             );
           })}

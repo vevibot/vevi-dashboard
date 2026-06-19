@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  getOverview, getAdminTrades, broadcastTrade,
+  getOverview, getAdminTrades, broadcastTrade, closePosition,
   OverviewResponse, AdminTrade, OpenPosition, BroadcastResult,
 } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
-import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download, Shield } from 'lucide-react';
+import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download, Shield, X } from 'lucide-react';
 import { MANUAL_TRADE_BASES_UNIQUE, toUsdtPerp, isStrategySymbol } from '@/lib/symbols';
 import { exportTradesCSV } from '@/lib/csvExport';
 import { ExchangePnlPanel } from '@/components/ExchangePnlPanel';
@@ -296,7 +297,10 @@ export default function AdminTradesPage() {
           {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-surface rounded-lg" />)}
         </div>
       ) : tab === 'live' ? (
-        <LiveTab positions={livePositions} />
+        <LiveTab
+          positions={livePositions}
+          onRefresh={() => getOverview().then(setOverview).catch(() => {})}
+        />
       ) : (
         <HistoryTab
           trades={closed}
@@ -308,9 +312,106 @@ export default function AdminTradesPage() {
   );
 }
 
+// ── Accounts cell — expandable per-account list with close ───────────────────
+
+function AccountsCell({ group, symbol, onRefresh }: {
+  group:     LivePos[];
+  symbol:    string;
+  onRefresh: () => void;
+}) {
+  const router    = useRouter();
+  const [open,      setOpen]      = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [closingId, setClosingId] = useState<string | null>(null);
+  const [errors,    setErrors]    = useState<Record<string, string>>({});
+
+  function dismiss() { setOpen(false); setConfirmId(null); }
+
+  async function handleClose(accountId: string) {
+    if (confirmId !== accountId) { setConfirmId(accountId); return; }
+    setClosingId(accountId);
+    setConfirmId(null);
+    try {
+      await closePosition({ account_id: accountId, symbol });
+      dismiss();
+      onRefresh();
+    } catch (err: any) {
+      const msg = (err.message || 'Failed').includes('No open position') ? 'Already closed' : (err.message || 'Failed');
+      setErrors(prev => ({ ...prev, [accountId]: msg }));
+    } finally {
+      setClosingId(null);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => { setOpen(o => !o); setConfirmId(null); }}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-elevated border border-border text-xs font-mono font-semibold text-text hover:border-green/40 hover:text-green transition-colors cursor-pointer"
+      >
+        {group.length}
+        <ChevronDown size={10} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <>
+          {/* backdrop */}
+          <div className="fixed inset-0 z-10" onClick={dismiss} />
+
+          {/* dropdown */}
+          <div className="absolute left-0 top-9 z-20 bg-surface border border-border rounded-xl shadow-2xl w-56 overflow-hidden">
+            {/* header */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-elevated/40">
+              <p className="text-[11px] text-muted font-sans uppercase tracking-wide">
+                {group.length} account{group.length !== 1 ? 's' : ''}
+              </p>
+              <button onClick={dismiss} className="text-muted hover:text-text transition-colors cursor-pointer">
+                <X size={12} />
+              </button>
+            </div>
+
+            {/* account list — scrollable */}
+            <div className="max-h-52 overflow-y-auto divide-y divide-border/30">
+              {group.map(pos => (
+                <div key={pos.account_id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-elevated/50 transition-colors">
+                  {/* account name → accounts page */}
+                  <button
+                    onClick={() => { dismiss(); router.push('/admin/accounts'); }}
+                    className="text-sm font-sans text-text hover:text-green transition-colors text-left truncate flex-1 cursor-pointer"
+                    title="Open account details"
+                  >
+                    {pos.account_name}
+                  </button>
+
+                  {/* close / confirm / error */}
+                  {errors[pos.account_id] ? (
+                    <span className="text-[10px] text-red font-sans shrink-0">{errors[pos.account_id]}</span>
+                  ) : (
+                    <button
+                      onClick={() => handleClose(pos.account_id)}
+                      disabled={closingId === pos.account_id}
+                      className={`shrink-0 text-xs font-sans font-medium px-2 py-1 rounded-md border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                        confirmId === pos.account_id
+                          ? 'bg-red text-white border-red hover:bg-red/90'
+                          : 'text-red/70 border-red/30 bg-red/5 hover:bg-red/10 hover:text-red hover:border-red/50'
+                      }`}
+                    >
+                      {closingId === pos.account_id ? '…' : confirmId === pos.account_id ? 'Confirm' : 'Close'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Live tab ──────────────────────────────────────────────────────────────────
 
-function LiveTab({ positions }: { positions: LivePos[] }) {
+function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: () => void }) {
   if (positions.length === 0) {
     return (
       <div className="bg-surface border border-border rounded-xl p-12 text-center">
@@ -342,6 +443,11 @@ function LiveTab({ positions }: { positions: LivePos[] }) {
             const sym    = symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '');
             const pct    = rep.unrealized_pct;
             const pctPos = pct !== null && pct >= 0;
+            // Use earliest opened_at across accounts for duration
+            const openedAt = group
+              .map(p => p.opened_at)
+              .filter(Boolean)
+              .sort()[0] ?? null;
             return (
               <tr key={symbol} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
                 <td className="px-5 py-3.5">
@@ -364,14 +470,9 @@ function LiveTab({ positions }: { positions: LivePos[] }) {
                 </td>
                 <td className="px-5 py-3.5 font-mono text-muted">{fmtPrice(rep.sl)}</td>
                 <td className="px-5 py-3.5 font-mono text-muted">{rep.tp ? fmtPrice(rep.tp) : '—'}</td>
-                <td className="px-5 py-3.5 text-muted text-xs">{duration(rep.opened_at)}</td>
+                <td className="px-5 py-3.5 text-muted text-xs">{duration(openedAt)}</td>
                 <td className="px-5 py-3.5">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-elevated border border-border text-xs font-mono font-semibold text-text">
-                    {group.length}
-                  </span>
-                  <p className="text-[11px] text-muted font-sans mt-0.5 max-w-[120px] truncate">
-                    {group.map(p => p.account_name).join(' · ')}
-                  </p>
+                  <AccountsCell group={group} symbol={symbol} onRefresh={onRefresh} />
                 </td>
               </tr>
             );

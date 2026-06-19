@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { BarChart2, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { BarChart2, X, ArrowUpRight } from 'lucide-react';
 import { OpenPosition, closePosition } from '@/lib/api';
 import { fmtPrice } from '@/lib/utils';
 import { Badge } from './Badge';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function PositionCard({ position: p, accountId, onTrade, onClosed }: Props) {
+  const router = useRouter();
   const side = p.side === 'buy' ? 'long' : 'short';
   const pct  = p.trail_sl && p.peak && p.entry
     ? Math.min(100, Math.max(0, Math.abs((p.peak - p.entry) / p.entry) * 100))
@@ -42,7 +44,14 @@ export function PositionCard({ position: p, accountId, onTrade, onClosed }: Prop
   return (
     <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3 hover:border-slate-500 transition-colors duration-200">
       <div className="flex items-center justify-between">
-        <span className="font-mono font-semibold text-text">{p.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '')}</span>
+        <button
+          onClick={() => router.push('/admin/trades')}
+          className="flex items-center gap-1 font-mono font-semibold text-text hover:text-green transition-colors cursor-pointer group"
+          title="View in Trades"
+        >
+          {p.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '')}
+          <ArrowUpRight size={12} className="text-muted group-hover:text-green transition-colors" />
+        </button>
         <Badge variant={side}>{side.toUpperCase()}</Badge>
       </div>
 

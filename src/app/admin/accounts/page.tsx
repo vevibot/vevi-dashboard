@@ -8,7 +8,7 @@ import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { PositionCard } from '@/components/ui/PositionCard';
 import { TradeModal }   from '@/components/TradeModal';
-import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight, Pencil } from 'lucide-react';
+import { PauseCircle, PlayCircle, Trash2, Plus, X, ChevronRight, Pencil, RefreshCw } from 'lucide-react';
 import { MANUAL_TRADE_BASES_UNIQUE, isStrategySymbol } from '@/lib/symbols';
 
 
@@ -19,15 +19,22 @@ export default function AccountsPage() {
   const [editAcc,  setEditAcc]        = useState<Account | null>(null);
   const [loading,  setLoading]        = useState(false);
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
-  // account_id → current balance (live, polled with overview)
+  const [actionId, setActionId]       = useState<string | null>(null);
+  // account_id → {balance, daily_pnl} (live, polled with overview)
   const [balances, setBalances]       = useState<Record<string, number>>({});
+  const [dailyPnls, setDailyPnls]     = useState<Record<string, number>>({});
 
   const reload = () => Promise.all([
     getAccounts().then(setAccounts),
     getOverview().then((o) => {
-      const m: Record<string, number> = {};
-      for (const a of o.accounts) m[a.account_id] = a.balance;
-      setBalances(m);
+      const bals: Record<string, number> = {};
+      const pnls: Record<string, number> = {};
+      for (const a of o.accounts) {
+        bals[a.account_id] = a.balance;
+        pnls[a.account_id] = a.daily_pnl;
+      }
+      setBalances(bals);
+      setDailyPnls(pnls);
     }).catch(() => {}),
   ]);
   useEffect(() => {
@@ -42,17 +49,26 @@ export default function AccountsPage() {
   }
 
   async function handlePause(id: string) {
-    await pauseAccount(id);
-    reload();
+    setActionId(id);
+    try {
+      await pauseAccount(id);
+      reload();
+    } catch (err: any) {
+      alert(`Pause failed: ${err.message || err}`);
+    } finally {
+      setActionId(null);
+    }
   }
 
   async function handleActivate(id: string) {
+    setActionId(id);
     try {
       await activateAccount(id);
       reload();
     } catch (err: any) {
-      // Backend returns 400 with a credential-validation reason. Show to admin.
       alert(`Cannot activate this account.\n\n${err.message || err}\n\nFix the API key/secret via Edit and try again.`);
+    } finally {
+      setActionId(null);
     }
   }
 
@@ -179,11 +195,17 @@ export default function AccountsPage() {
                 <td className="px-5 py-3.5 font-mono text-text">
                   {bal != null ? `$${bal.toFixed(2)}` : '—'}
                 </td>
-                <td className="px-5 py-3.5 font-mono text-muted">—</td>
+                <td className="px-5 py-3.5 font-mono">
+                  {dailyPnls[acc.id] != null
+                    ? <span className={dailyPnls[acc.id] >= 0 ? 'text-green' : 'text-red'}>{fmtPnl(dailyPnls[acc.id])}</span>
+                    : <span className="text-muted">—</span>}
+                </td>
                 <td className="px-5 py-3.5 text-muted text-xs">{fmtDate(acc.created_at)}</td>
                 <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center gap-2">
-                    {acc.is_active ? (
+                    {actionId === acc.id ? (
+                      <RefreshCw size={14} className="animate-spin text-muted" />
+                    ) : acc.is_active ? (
                       <button onClick={() => handlePause(acc.id)} title="Pause"
                         className="text-muted hover:text-red transition-colors cursor-pointer">
                         <PauseCircle size={16} />
@@ -226,6 +248,7 @@ export default function AccountsPage() {
           exchange={accounts.find(a => a.id === selected.account_id)?.exchange || 'bingx'}
           onClose={() => setSelected(null)}
           onTrade={setTradeSymbol}
+          onRefresh={() => getAccountSnap(selected.account_id).then(setSelected)}
         />
       )}
 
@@ -257,11 +280,12 @@ export default function AccountsPage() {
 // Manual trading from the account drawer — full catalogue (not just strategy 10).
 const TRADE_SYMBOLS = MANUAL_TRADE_BASES_UNIQUE;
 
-function AccountDrawer({ snap, exchange, onClose, onTrade }: {
+function AccountDrawer({ snap, exchange, onClose, onTrade, onRefresh }: {
   snap: AccountSnapshot;
   exchange: string;
   onClose: () => void;
   onTrade: (symbol: string) => void;
+  onRefresh: () => void;
 }) {
   const toSymbol = (base: string) =>
     exchange === 'hyperliquid' ? `${base}/USDC:USDC` : `${base}/USDT:USDT`;
@@ -336,7 +360,13 @@ function AccountDrawer({ snap, exchange, onClose, onTrade }: {
             {snap.open_positions.length > 0 ? (
               <div className="space-y-3">
                 {snap.open_positions.map((p) => (
-                  <PositionCard key={p.symbol} position={p} onTrade={onTrade} />
+                  <PositionCard
+                    key={p.symbol}
+                    position={p}
+                    accountId={snap.account_id}
+                    onTrade={onTrade}
+                    onClosed={onRefresh}
+                  />
                 ))}
               </div>
             ) : (

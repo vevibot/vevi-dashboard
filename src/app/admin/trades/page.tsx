@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   getOverview, getAdminTrades, broadcastTrade, closePosition,
@@ -313,19 +313,39 @@ export default function AdminTradesPage() {
 }
 
 // ── Accounts cell — expandable per-account list with close ───────────────────
+// Uses fixed positioning so the dropdown escapes the table's overflow-x-auto clip.
 
 function AccountsCell({ group, symbol, onRefresh }: {
   group:     LivePos[];
   symbol:    string;
   onRefresh: () => void;
 }) {
-  const router    = useRouter();
+  const router  = useRouter();
+  const btnRef  = useRef<HTMLButtonElement>(null);
   const [open,      setOpen]      = useState(false);
+  const [dropPos,   setDropPos]   = useState({ top: 0, left: 0 });
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [closingId, setClosingId] = useState<string | null>(null);
   const [errors,    setErrors]    = useState<Record<string, string>>({});
 
+  function openDrop() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 6, left: r.left });
+    }
+    setOpen(o => !o);
+    setConfirmId(null);
+  }
+
   function dismiss() { setOpen(false); setConfirmId(null); }
+
+  // Close dropdown on any scroll so it doesn't float away from its anchor
+  useEffect(() => {
+    if (!open) return;
+    const close = () => dismiss();
+    window.addEventListener('scroll', close, true);
+    return () => window.removeEventListener('scroll', close, true);
+  }, [open]);
 
   async function handleClose(accountId: string) {
     if (confirmId !== accountId) { setConfirmId(accountId); return; }
@@ -344,9 +364,10 @@ function AccountsCell({ group, symbol, onRefresh }: {
   }
 
   return (
-    <div className="relative">
+    <div>
       <button
-        onClick={() => { setOpen(o => !o); setConfirmId(null); }}
+        ref={btnRef}
+        onClick={openDrop}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-elevated border border-border text-xs font-mono font-semibold text-text hover:border-green/40 hover:text-green transition-colors cursor-pointer"
       >
         {group.length}
@@ -355,12 +376,14 @@ function AccountsCell({ group, symbol, onRefresh }: {
 
       {open && (
         <>
-          {/* backdrop */}
-          <div className="fixed inset-0 z-10" onClick={dismiss} />
+          {/* full-screen backdrop */}
+          <div className="fixed inset-0 z-40" onClick={dismiss} />
 
-          {/* dropdown */}
-          <div className="absolute left-0 top-9 z-20 bg-surface border border-border rounded-xl shadow-2xl w-56 overflow-hidden">
-            {/* header */}
+          {/* dropdown — fixed so table overflow-x-auto can't clip it */}
+          <div
+            style={{ top: dropPos.top, left: dropPos.left }}
+            className="fixed z-50 bg-surface border border-border rounded-xl shadow-2xl w-60 overflow-hidden"
+          >
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-elevated/40">
               <p className="text-[11px] text-muted font-sans uppercase tracking-wide">
                 {group.length} account{group.length !== 1 ? 's' : ''}
@@ -370,11 +393,9 @@ function AccountsCell({ group, symbol, onRefresh }: {
               </button>
             </div>
 
-            {/* account list — scrollable */}
-            <div className="max-h-52 overflow-y-auto divide-y divide-border/30">
+            <div className="max-h-60 overflow-y-auto divide-y divide-border/30">
               {group.map(pos => (
                 <div key={pos.account_id} className="flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-elevated/50 transition-colors">
-                  {/* account name → accounts page */}
                   <button
                     onClick={() => { dismiss(); router.push('/admin/accounts'); }}
                     className="text-sm font-sans text-text hover:text-green transition-colors text-left truncate flex-1 cursor-pointer"
@@ -382,8 +403,6 @@ function AccountsCell({ group, symbol, onRefresh }: {
                   >
                     {pos.account_name}
                   </button>
-
-                  {/* close / confirm / error */}
                   {errors[pos.account_id] ? (
                     <span className="text-[10px] text-red font-sans shrink-0">{errors[pos.account_id]}</span>
                   ) : (
@@ -405,6 +424,53 @@ function AccountsCell({ group, symbol, onRefresh }: {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Close-all cell ────────────────────────────────────────────────────────────
+
+function CloseCell({ group, symbol, onRefresh }: {
+  group:     LivePos[];
+  symbol:    string;
+  onRefresh: () => void;
+}) {
+  const [confirm, setConfirm] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [error,   setError]   = useState('');
+
+  async function handleClose() {
+    if (!confirm) { setConfirm(true); return; }
+    setClosing(true);
+    setConfirm(false);
+    setError('');
+    try {
+      await Promise.all(
+        group.map(pos => closePosition({ account_id: pos.account_id, symbol }))
+      );
+      onRefresh();
+    } catch (err: any) {
+      setError(err.message?.includes('No open position') ? 'Already closed' : (err.message || 'Failed'));
+    } finally {
+      setClosing(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        onClick={handleClose}
+        disabled={closing}
+        onBlur={() => setTimeout(() => setConfirm(false), 200)}
+        className={`text-xs font-sans font-medium px-3 py-1.5 rounded-lg border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
+          confirm
+            ? 'bg-red text-white border-red hover:bg-red/90'
+            : 'text-red/70 border-red/30 bg-red/5 hover:bg-red/10 hover:text-red hover:border-red/50'
+        }`}
+      >
+        {closing ? 'Closing…' : confirm ? `Confirm${group.length > 1 ? ` (${group.length})` : ''}` : 'Close'}
+      </button>
+      {error && <p className="text-[10px] text-red font-sans">{error}</p>}
     </div>
   );
 }
@@ -432,7 +498,7 @@ function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: ()
       <table className="w-full text-sm font-sans min-w-[800px]">
         <thead>
           <tr className="border-b border-border">
-            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration', 'Accounts'].map((h) => (
+            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration', 'Accounts', 'Close'].map((h) => (
               <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
             ))}
           </tr>
@@ -473,6 +539,9 @@ function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: ()
                 <td className="px-5 py-3.5 text-muted text-xs">{duration(openedAt)}</td>
                 <td className="px-5 py-3.5">
                   <AccountsCell group={group} symbol={symbol} onRefresh={onRefresh} />
+                </td>
+                <td className="px-5 py-3.5">
+                  <CloseCell group={group} symbol={symbol} onRefresh={onRefresh} />
                 </td>
               </tr>
             );

@@ -34,27 +34,35 @@ interface LivePos extends OpenPosition { account_name: string; account_id: strin
 // ── Broadcast panel ───────────────────────────────────────────────────────────
 
 function BroadcastPanel() {
-  const [symbol,   setSymbol]   = useState(SYMBOLS[0]);
-  const [side,     setSide]     = useState<'buy' | 'sell'>('buy');
-  const [amount,   setAmount]   = useState('10');
-  const [leverage, setLeverage] = useState('20');
-  const [sl,       setSl]       = useState('');
-  const [tp,       setTp]       = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [results,  setResults]  = useState<BroadcastResult[] | null>(null);
-  const [error,    setError]    = useState('');
+  const [symbol,     setSymbol]     = useState(SYMBOLS[0]);
+  const [side,       setSide]       = useState<'buy' | 'sell'>('buy');
+  const [pct,        setPct]        = useState('5');
+  const [leverage,   setLeverage]   = useState('20');
+  const [orderType,  setOrderType]  = useState<'market' | 'limit'>('market');
+  const [limitPrice, setLimitPrice] = useState('');
+  const [sl,         setSl]         = useState('');
+  const [tp,         setTp]         = useState('');
+  const [loading,    setLoading]    = useState(false);
+  const [results,    setResults]    = useState<BroadcastResult[] | null>(null);
+  const [error,      setError]      = useState('');
 
   const submit = async () => {
-    if (!amount || parseFloat(amount) <= 0) return;
+    const pctVal = parseFloat(pct);
+    if (!pct || pctVal <= 0 || pctVal > 100) { setError('Enter a % between 0.1 and 100'); return; }
+    if (orderType === 'limit' && (!limitPrice || parseFloat(limitPrice) <= 0)) {
+      setError('Enter a limit price'); return;
+    }
     setLoading(true); setError(''); setResults(null);
     try {
       const res = await broadcastTrade({
         symbol,
         side,
-        usdt_amount: parseFloat(amount),
-        leverage:    parseInt(leverage) || 20,
-        sl:          sl ? parseFloat(sl) : undefined,
-        tp:          tp ? parseFloat(tp) : undefined,
+        balance_pct:  pctVal,
+        leverage:     parseInt(leverage) || 20,
+        order_type:   orderType,
+        limit_price:  orderType === 'limit' ? parseFloat(limitPrice) : undefined,
+        sl:           sl ? parseFloat(sl) : undefined,
+        tp:           tp ? parseFloat(tp) : undefined,
       });
       setResults(res.results);
     } catch (e: any) {
@@ -66,6 +74,8 @@ function BroadcastPanel() {
 
   const reset = () => { setResults(null); setError(''); };
 
+  const inputCls = 'bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60';
+
   return (
     <div className="bg-surface border border-border rounded-xl mb-6 overflow-hidden">
       {/* Header */}
@@ -74,7 +84,7 @@ function BroadcastPanel() {
         <Radio size={14} className="text-green" />
         <span className="font-mono font-semibold text-sm text-text">Broadcast Trade</span>
         <span className="text-[10px] bg-green/10 text-green border border-green/30 rounded px-1.5 py-0.5 font-mono">ADMIN · ALL ACCOUNTS</span>
-        <span className="text-xs text-muted font-sans ml-auto">Places the same trade simultaneously on every active account</span>
+        <span className="text-xs text-muted font-sans ml-auto">% sizing scales to each account's balance</span>
       </div>
 
       <div className="p-5">
@@ -87,7 +97,7 @@ function BroadcastPanel() {
               <div className="relative">
                 <select
                   value={symbol} onChange={e => setSymbol(e.target.value)}
-                  className="appearance-none w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60 pr-8 cursor-pointer"
+                  className={`${inputCls} appearance-none pr-8 cursor-pointer`}
                 >
                   {SYMBOLS.map(s => {
                     const base = s.split('/')[0];
@@ -99,78 +109,89 @@ function BroadcastPanel() {
               </div>
             </div>
 
-            {/* Side */}
+            {/* Direction */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Direction</label>
               <div className="flex gap-1.5">
-                <button
-                  onClick={() => setSide('buy')}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-mono font-semibold transition-colors border cursor-pointer ${
-                    side === 'buy'
-                      ? 'bg-green/15 text-green border-green/40'
-                      : 'bg-elevated text-muted border-border hover:text-text'
-                  }`}
-                >
-                  ▲ LONG
-                </button>
-                <button
-                  onClick={() => setSide('sell')}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-mono font-semibold transition-colors border cursor-pointer ${
-                    side === 'sell'
-                      ? 'bg-red/15 text-red border-red/40'
-                      : 'bg-elevated text-muted border-border hover:text-text'
-                  }`}
-                >
-                  ▼ SHORT
-                </button>
+                {(['buy', 'sell'] as const).map(s => (
+                  <button key={s} onClick={() => setSide(s)}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-mono font-semibold transition-colors border cursor-pointer ${
+                      side === s
+                        ? s === 'buy' ? 'bg-green/15 text-green border-green/40' : 'bg-red/15 text-red border-red/40'
+                        : 'bg-elevated text-muted border-border hover:text-text'
+                    }`}
+                  >
+                    {s === 'buy' ? '▲ LONG' : '▼ SHORT'}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* USDT Amount */}
+            {/* % of Balance */}
             <div className="flex flex-col gap-1.5 w-28">
-              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">USDT Amount</label>
-              <input
-                type="number" value={amount} onChange={e => setAmount(e.target.value)}
-                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
-                placeholder="10"
-              />
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">% of Balance</label>
+              <div className="relative">
+                <input
+                  type="number" value={pct} onChange={e => setPct(e.target.value)}
+                  className={`${inputCls} w-full pr-7`}
+                  placeholder="5" min="0.1" max="100" step="0.5"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm font-mono pointer-events-none">%</span>
+              </div>
             </div>
 
             {/* Leverage */}
             <div className="flex flex-col gap-1.5 w-24">
               <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Leverage</label>
-              <input
-                type="number" value={leverage} onChange={e => setLeverage(e.target.value)}
-                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
-                placeholder="20"
-              />
+              <input type="number" value={leverage} onChange={e => setLeverage(e.target.value)}
+                className={`${inputCls}`} placeholder="20" />
             </div>
+
+            {/* Order Type */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Order Type</label>
+              <div className="flex gap-1.5">
+                {(['market', 'limit'] as const).map(t => (
+                  <button key={t} onClick={() => setOrderType(t)}
+                    className={`px-4 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase transition-colors border cursor-pointer ${
+                      orderType === t
+                        ? 'bg-green/15 text-green border-green/40'
+                        : 'bg-elevated text-muted border-border hover:text-text'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Limit Price — only when limit selected */}
+            {orderType === 'limit' && (
+              <div className="flex flex-col gap-1.5 w-36">
+                <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Limit Price</label>
+                <input type="number" value={limitPrice} onChange={e => setLimitPrice(e.target.value)}
+                  className={`${inputCls}`} placeholder="0.0000" step="any" autoFocus />
+              </div>
+            )}
 
             {/* SL */}
             <div className="flex flex-col gap-1.5 w-32">
               <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Stop Loss <span className="normal-case text-muted/60">(opt)</span></label>
-              <input
-                type="number" value={sl} onChange={e => setSl(e.target.value)}
-                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
-                placeholder="0.000"
-              />
+              <input type="number" value={sl} onChange={e => setSl(e.target.value)}
+                className={`${inputCls}`} placeholder="0.000" />
             </div>
 
             {/* TP */}
             <div className="flex flex-col gap-1.5 w-32">
               <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Take Profit <span className="normal-case text-muted/60">(opt)</span></label>
-              <input
-                type="number" value={tp} onChange={e => setTp(e.target.value)}
-                className="bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60"
-                placeholder="0.000"
-              />
+              <input type="number" value={tp} onChange={e => setTp(e.target.value)}
+                className={`${inputCls}`} placeholder="0.000" />
             </div>
 
             {/* Submit */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] text-transparent font-sans uppercase tracking-wide select-none">.</label>
-              <button
-                onClick={submit} disabled={loading}
+              <button onClick={submit} disabled={loading}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-mono font-semibold text-sm transition-colors border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                   side === 'buy'
                     ? 'bg-green/15 text-green border-green/40 hover:bg-green/25'
@@ -184,14 +205,9 @@ function BroadcastPanel() {
               </button>
             </div>
 
-            {error && (
-              <div className="w-full mt-1">
-                <p className="text-red text-xs font-sans">{error}</p>
-              </div>
-            )}
+            {error && <div className="w-full"><p className="text-red text-xs font-sans">{error}</p></div>}
           </div>
         ) : (
-          /* Results */
           <div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-sans text-text">
@@ -205,20 +221,20 @@ function BroadcastPanel() {
             </div>
             <div className="flex flex-wrap gap-3">
               {results.map(r => (
-                <div
-                  key={r.account_id}
+                <div key={r.account_id}
                   className={`flex items-start gap-2.5 px-4 py-3 rounded-lg border min-w-[200px] ${
                     r.ok ? 'bg-green/5 border-green/20' : 'bg-red/5 border-red/20'
                   }`}
                 >
-                  {r.ok
-                    ? <CheckCircle2 size={14} className="text-green mt-0.5 shrink-0" />
-                    : <XCircle     size={14} className="text-red   mt-0.5 shrink-0" />
-                  }
+                  {r.ok ? <CheckCircle2 size={14} className="text-green mt-0.5 shrink-0" />
+                        : <XCircle     size={14} className="text-red   mt-0.5 shrink-0" />}
                   <div>
                     <p className="text-text text-xs font-medium font-sans">{r.account_name}</p>
                     {r.ok
-                      ? <p className="text-muted text-[11px] font-mono">@ {r.price?.toFixed(4)} · {r.contracts} lots</p>
+                      ? <p className="text-muted text-[11px] font-mono">
+                          @ {r.price?.toFixed(4)} · {r.contracts} lots
+                          {(r as any).usdt_used ? ` · $${(r as any).usdt_used}` : ''}
+                        </p>
                       : <p className="text-red text-[11px] font-sans">{r.error}</p>
                     }
                   </div>

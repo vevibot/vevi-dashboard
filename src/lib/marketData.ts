@@ -94,6 +94,22 @@ export async function fetchKlinesRange(
   }
 }
 
+/** BingX candle proxy (our API) — fallback for symbols Binance doesn't list (e.g. HYPE). */
+export async function fetchProxyKlines(base: string, interval: string, limit = 300): Promise<KlineCandle[]> {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('vevi_token') : '';
+    const res = await fetch(`/api/dashboard/candles?base=${base}&interval=${interval}&limit=${limit}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) return [];
+    const d = await res.json();
+    return (d.candles || []).map((c: any) => ({
+      openTime: c.time * 1000, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchAllTickers(symbols: string[]): Promise<Record<string, TickerData>> {
   const results = await Promise.all(symbols.map(fetchTicker));
   const map: Record<string, TickerData> = {};

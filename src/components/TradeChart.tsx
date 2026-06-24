@@ -4,7 +4,7 @@ import {
   createChart, ColorType, CrosshairMode, LineStyle,
   type IChartApi, type ISeriesApi, type IPriceLine, type UTCTimestamp, type SeriesMarker,
 } from 'lightweight-charts';
-import { fetchKlines, fetchKlinesRange } from '@/lib/marketData';
+import { fetchKlines, fetchKlinesRange, fetchProxyKlines } from '@/lib/marketData';
 
 export interface UITrade {
   id: string; side: 'buy' | 'sell';
@@ -106,9 +106,13 @@ export function TradeChart({ binanceSym, interval, range, trades, selectedId, on
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const candles = range
+      let candles = range
         ? await fetchKlinesRange(binanceSym, interval, range.startMs, range.endMs)
         : await fetchKlines(binanceSym, interval, 300);
+      if (candles.length === 0) {
+        // Binance doesn't list this market (e.g. HYPE) → our BingX candle proxy
+        candles = await fetchProxyKlines(binanceSym.replace(/USDT$/, ''), interval, 300);
+      }
       if (cancelled || !seriesRef.current) return;
       seriesRef.current.setData(candles.map(k => ({
         time: Math.floor(k.openTime / 1000) as UTCTimestamp,

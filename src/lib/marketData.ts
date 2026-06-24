@@ -70,6 +70,30 @@ export async function fetchKlines(
   }
 }
 
+/** Klines over a fixed time range — used to align trade markers with candles. */
+export async function fetchKlinesRange(
+  binanceSym: string,
+  interval: string,
+  startMs: number,
+  endMs: number,
+): Promise<KlineCandle[]> {
+  try {
+    const res = await fetch(
+      `${BINANCE_BASE}/klines?symbol=${binanceSym}&interval=${interval}` +
+      `&startTime=${startMs}&endTime=${endMs}&limit=1000`,
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((k: any[]) => ({
+      openTime: k[0],
+      open: parseFloat(k[1]), high: parseFloat(k[2]),
+      low: parseFloat(k[3]), close: parseFloat(k[4]), volume: parseFloat(k[5]),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchAllTickers(symbols: string[]): Promise<Record<string, TickerData>> {
   const results = await Promise.all(symbols.map(fetchTicker));
   const map: Record<string, TickerData> = {};

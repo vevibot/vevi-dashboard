@@ -164,30 +164,30 @@ export default function AdminOverview() {
                       <p className="text-text font-medium truncate">{acc.name}</p>
                       <p className="text-muted text-xs truncate">{acc.email}</p>
                     </div>
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-slate-500/10 text-muted border-slate-600/30'}`}>
-                      <span className={`w-1 h-1 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-slate-500'}`} />
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded border shrink-0 ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-elevated text-muted border-border'}`}>
+                      <span className={`w-1 h-1 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-muted'}`} />
                       {acc.is_active ? 'Active' : 'Paused'}
                     </span>
                   </div>
                   <div className="grid grid-cols-4 gap-2 pt-3 border-t border-border/40">
                     <div>
-                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">Balance</p>
+                      <p className="text-muted text-[11px] uppercase tracking-wide mb-0.5">Balance</p>
                       <p className="font-mono font-semibold text-xs text-text">
                         {acc.balance > 0 ? `$${acc.balance.toFixed(2)}` : '—'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">P&L</p>
+                      <p className="text-muted text-[11px] uppercase tracking-wide mb-0.5">P&L</p>
                       <p className={`font-mono font-semibold text-xs ${(acc.realized_pnl_24h ?? acc.daily_pnl) >= 0 ? 'text-green' : 'text-red'}`}>
                         {fmtPnl(acc.realized_pnl_24h ?? acc.daily_pnl)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">Open</p>
+                      <p className="text-muted text-[11px] uppercase tracking-wide mb-0.5">Open</p>
                       <p className="font-mono font-semibold text-xs text-text">{acc.open_count}</p>
                     </div>
                     <div>
-                      <p className="text-muted text-[9px] uppercase tracking-wide mb-0.5">Trades</p>
+                      <p className="text-muted text-[11px] uppercase tracking-wide mb-0.5">Trades</p>
                       <p className="font-mono font-semibold text-xs text-text">{acc.daily_trades}</p>
                     </div>
                   </div>
@@ -244,8 +244,8 @@ export default function AdminOverview() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded border ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-slate-500/10 text-muted border-slate-600/30'}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-slate-500'}`} />
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded border ${acc.is_active ? 'bg-green/10 text-green border-green/30' : 'bg-elevated text-muted border-border'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${acc.is_active ? 'bg-green animate-pulse-slow' : 'bg-muted'}`} />
                           {acc.is_active ? 'Active' : 'Paused'}
                         </span>
                       </td>

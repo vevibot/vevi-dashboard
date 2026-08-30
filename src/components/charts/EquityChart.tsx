@@ -30,7 +30,7 @@ export function EquityChart({ trades }: Props) {
   }
 
   const latest = data[data.length - 1].pnl;
-  const color  = latest >= 0 ? '#22C55E' : '#EF4444';
+  const color  = latest >= 0 ? '#00FF41' : '#FF3131';
 
   return (
     <ResponsiveContainer width="100%" height={176}>
@@ -43,24 +43,24 @@ export function EquityChart({ trades }: Props) {
         </defs>
         <XAxis
           dataKey="label"
-          tick={{ fill: '#94A3B8', fontSize: 10 }}
+          tick={{ fill: '#8A8A8A', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fill: '#94A3B8', fontSize: 10 }}
+          tick={{ fill: '#8A8A8A', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) => `$${v}`}
           width={52}
         />
-        <ReferenceLine y={0} stroke="#334155" strokeDasharray="3 3" />
+        <ReferenceLine y={0} stroke="#1E1E1E" strokeDasharray="3 3" />
         <Tooltip
-          contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, fontSize: 12, color: '#F8FAFC' }}
+          contentStyle={{ background: '#0A0A0A', border: '1px solid #1E1E1E', borderRadius: 8, fontSize: 12, color: '#FFFFFF' }}
           formatter={(v: number) => [`$${v.toFixed(2)}`, 'Cumulative P&L']}
-          labelStyle={{ color: '#94A3B8' }}
-          cursor={{ stroke: '#334155', strokeWidth: 1 }}
+          labelStyle={{ color: '#8A8A8A' }}
+          cursor={{ stroke: '#1E1E1E', strokeWidth: 1 }}
         />
         <Area
           type="monotone"

@@ -70,6 +70,49 @@ export async function fetchKlines(
   }
 }
 
+/** Bar length in ms — used to page backwards for lazy-load of older history. */
+const INTERVAL_MS: Record<string, number> = {
+  '1m': 60_000, '3m': 180_000, '5m': 300_000, '15m': 900_000,
+  '30m': 1_800_000, '1h': 3_600_000, '2h': 7_200_000, '4h': 14_400_000,
+};
+
+/**
+ * Page BACKWARDS on Binance: fetch OLDER candles that end just before `endMs`.
+ * Used by the chart's lazy-paging when the user pans / zooms left.
+ */
+export async function fetchOlder(
+  binanceSym: string,
+  interval: string,
+  endMs: number,
+  limit = 300,
+): Promise<KlineCandle[]> {
+  const step    = INTERVAL_MS[interval] || 300_000;
+  const startMs = endMs - limit * step;
+  return fetchKlinesRange(binanceSym, interval, startMs, endMs - 1);
+}
+
+/** Page BACKWARDS via the BingX proxy (for symbols Binance doesn't list). */
+export async function fetchProxyOlder(
+  base: string,
+  interval: string,
+  endMs: number,
+  limit = 300,
+): Promise<KlineCandle[]> {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('vevi_token') : '';
+    const res = await fetch(
+      `/api/dashboard/candles?base=${base}&interval=${interval}&limit=${limit}&end_ms=${endMs}`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) return [];
+    const d = await res.json();
+    return (d.candles || []).map((c: any) => ({
+      openTime: c.time * 1000, open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 /** Klines over a fixed time range — used to align trade markers with candles. */
 export async function fetchKlinesRange(
   binanceSym: string,

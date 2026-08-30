@@ -42,7 +42,7 @@ export function PositionCard({ position: p, accountId, onTrade, onClosed }: Prop
   }
 
   return (
-    <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3 hover:border-slate-500 transition-colors duration-200">
+    <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3 hover:border-accent/40 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.push('/admin/trades')}
@@ -97,7 +97,7 @@ export function PositionCard({ position: p, accountId, onTrade, onClosed }: Prop
         {onTrade && (
           <button
             onClick={() => { setConfirm(false); onTrade(p.symbol); }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-sans text-muted hover:text-text hover:bg-elevated border border-border hover:border-slate-500 transition-colors cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-sans text-muted hover:text-text hover:bg-elevated border border-border hover:border-accent/40 transition-colors cursor-pointer"
           >
             <BarChart2 size={13} />
             Chart / Trade

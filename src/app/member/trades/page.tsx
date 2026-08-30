@@ -1,11 +1,17 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getMyDashboard, getMyTrades, AccountSnapshot, Trade, OpenPosition } from '@/lib/api';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
 import { ExchangePnlPanel } from '@/components/ExchangePnlPanel';
-import { ListOrdered } from 'lucide-react';
+import { exportTradesCSV } from '@/lib/csvExport';
+import {
+  TradeFilterBar, SortTh, baseOf, DATE_MS,
+  type SortKey, type SortDir, type DirFilter, type DateFilter,
+} from '@/components/TradeFilters';
+import { ListOrdered, Download } from 'lucide-react';
 
 type Tab = 'live' | 'history';
 
@@ -37,6 +43,8 @@ export default function TradesPage() {
 
     const iv = setInterval(() => {
       getMyDashboard().then(setSnap).catch(() => {});
+      // Poll closed trades too so History updates live without a reload.
+      getMyTrades(200).then((r) => setTrades(r.trades)).catch(() => {});
     }, 15_000);
     return () => clearInterval(iv);
   }, []);
@@ -85,7 +93,7 @@ export default function TradesPage() {
       ) : tab === 'live' ? (
         <LiveTab positions={live} />
       ) : (
-        <HistoryTab trades={closed} totalPnl={totalPnl} allTrades={trades} />
+        <HistoryTab trades={closed} allTrades={trades} account={snap} />
       )}
     </div>
   );
@@ -108,9 +116,10 @@ function LiveTab({ positions }: { positions: OpenPosition[] }) {
       <table className="w-full text-sm font-sans min-w-[700px]">
         <thead>
           <tr className="border-b border-border">
-            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration'].map((h) => (
-              <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
-            ))}
+            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration'].map((h) => {
+              const num = ['Entry', 'Current', 'Unreal. P&L', 'SL', 'TP'].includes(h);
+              return <th key={h} className={`text-muted text-xs font-medium px-5 py-3 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+            })}
           </tr>
         </thead>
         <tbody>
@@ -125,11 +134,11 @@ function LiveTab({ positions }: { positions: OpenPosition[] }) {
                   <span className="ml-2 text-[10px] bg-green/10 text-green border border-green/20 rounded px-1 py-0.5">OPEN</span>
                 </td>
                 <td className="px-5 py-3.5"><Badge variant={pos.side as 'long'|'short'}>{pos.side.toUpperCase()}</Badge></td>
-                <td className="px-5 py-3.5 font-mono text-text">{fmtPrice(pos.entry)}</td>
-                <td className="px-5 py-3.5 font-mono text-text">
+                <td className="px-5 py-3.5 font-mono text-text text-right tabular-nums">{fmtPrice(pos.entry)}</td>
+                <td className="px-5 py-3.5 font-mono text-text text-right tabular-nums">
                   {pos.current_price ? fmtPrice(pos.current_price) : <span className="text-muted">—</span>}
                 </td>
-                <td className="px-5 py-3.5 font-mono">
+                <td className="px-5 py-3.5 font-mono text-right tabular-nums">
                   {pct !== null ? (
                     <span className={`font-semibold ${pctPos ? 'text-green' : 'text-red'}`}>
                       {pctPos ? '+' : ''}{pct.toFixed(2)}%
@@ -138,8 +147,8 @@ function LiveTab({ positions }: { positions: OpenPosition[] }) {
                     <span className="text-muted text-xs">syncing…</span>
                   )}
                 </td>
-                <td className="px-5 py-3.5 font-mono text-muted">{fmtPrice(pos.sl)}</td>
-                <td className="px-5 py-3.5 font-mono text-muted">{pos.tp ? fmtPrice(pos.tp) : '—'}</td>
+                <td className="px-5 py-3.5 font-mono text-muted text-right tabular-nums">{fmtPrice(pos.sl)}</td>
+                <td className="px-5 py-3.5 font-mono text-muted text-right tabular-nums">{pos.tp ? fmtPrice(pos.tp) : '—'}</td>
                 <td className="px-5 py-3.5 text-muted text-xs">{duration(pos.opened_at)}</td>
               </tr>
             );
@@ -152,7 +161,46 @@ function LiveTab({ positions }: { positions: OpenPosition[] }) {
 
 // ── History tab ───────────────────────────────────────────────────────────────
 
-function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl: number; allTrades: Trade[] }) {
+function HistoryTab({ trades, allTrades, account }: {
+  trades: Trade[]; allTrades: Trade[]; account: AccountSnapshot | null;
+}) {
+  const router = useRouter();
+  const [symFilter, setSymFilter]   = useState('all');
+  const [dirFilter, setDirFilter]   = useState<DirFilter>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'opened', dir: 'desc' });
+
+  const symbolOptions = Array.from(new Set(trades.map(t => baseOf(t.symbol)))).sort();
+  const dateCut = dateFilter === 'all' ? 0 : Date.now() - DATE_MS[dateFilter];
+  const matches = (t: Trade) =>
+    (symFilter === 'all' || baseOf(t.symbol) === symFilter) &&
+    (dirFilter === 'all' || t.side === dirFilter) &&
+    (dateCut === 0 || new Date(t.closed_at ?? t.opened_at).getTime() >= dateCut);
+
+  const filtered = trades.filter(matches);
+  const filteredPnl = filtered.reduce((s, t) => s + (t.pnl ?? 0), 0);
+
+  const sorted = [...filtered].sort((a, b) => {
+    let av: number | string, bv: number | string;
+    if (sort.key === 'pnl')          { av = a.pnl ?? 0; bv = b.pnl ?? 0; }
+    else if (sort.key === 'symbol')  { av = baseOf(a.symbol); bv = baseOf(b.symbol); }
+    else                             { av = new Date(a.opened_at).getTime(); bv = new Date(b.opened_at).getTime(); }
+    if (av < bv) return sort.dir === 'asc' ? -1 : 1;
+    if (av > bv) return sort.dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  function downloadCSV() {
+    if (sorted.length === 0) return;
+    exportTradesCSV(sorted, {
+      accountName:  account?.name ?? 'account',
+      accountEmail: account?.email ?? '',
+      exporterRole: 'member',
+    });
+  }
+
+  const filtersActive = symFilter !== 'all' || dirFilter !== 'all' || dateFilter !== 'all';
+
   return (
     <>
       {/* Exchange-side truth — sourced from BingX directly */}
@@ -163,38 +211,66 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-muted text-xs font-sans uppercase tracking-wide">Vevi Cumulative P&L (internal)</p>
-              <p className={`font-mono font-semibold text-lg mt-0.5 ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
-                {fmtPnl(totalPnl)}
+              <p className={`font-mono font-semibold text-lg mt-0.5 ${filteredPnl >= 0 ? 'text-green' : 'text-red'}`}>
+                {fmtPnl(filteredPnl)}
               </p>
             </div>
-            <span className="text-xs text-muted font-sans">{trades.length} closed trades</span>
+            <span className="text-xs text-muted font-sans">{filtered.length} closed trades</span>
           </div>
-          <EquityChart trades={allTrades} />
+          <EquityChart trades={filtered} />
         </div>
       )}
 
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm font-sans">
+      {/* Symbol / direction / date filter bar + CSV export */}
+      <TradeFilterBar
+        symbols={symbolOptions}
+        sym={symFilter} setSym={setSymFilter}
+        dir={dirFilter} setDir={setDirFilter}
+        date={dateFilter} setDate={setDateFilter}
+        count={filtered.length}
+        extra={
+          <button
+            onClick={downloadCSV}
+            disabled={sorted.length === 0}
+            title="Download filtered trades as CSV with PnL summary (tax)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-sans font-medium bg-elevated text-text border border-border hover:border-green/40 hover:text-green transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          >
+            <Download size={13} /> CSV
+          </button>
+        }
+      />
+
+      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
+        <table className="w-full text-sm font-sans min-w-[640px]">
           <thead>
             <tr className="border-b border-border">
-              {['Symbol', 'Side', 'Entry', 'Exit', 'P&L', 'Opened', 'Closed'].map((h) => (
-                <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
-              ))}
+              <SortTh label="Symbol" col="symbol" sort={sort} setSort={setSort} />
+              <th className="text-muted text-xs font-medium px-5 py-3 text-left">Side</th>
+              <th className="text-muted text-xs font-medium px-5 py-3 text-right">Entry</th>
+              <th className="text-muted text-xs font-medium px-5 py-3 text-right">Exit</th>
+              <SortTh label="P&L" col="pnl" sort={sort} setSort={setSort} align="right" />
+              <SortTh label="Opened" col="opened" sort={sort} setSort={setSort} />
+              <th className="text-muted text-xs font-medium px-5 py-3 text-left">Closed</th>
             </tr>
           </thead>
           <tbody>
-            {trades.map((t) => {
+            {sorted.map((t) => {
               const side = t.side === 'buy' ? 'long' : 'short';
               const pnl  = t.pnl ?? 0;
               return (
-                <tr key={t.id} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
+                <tr
+                  key={t.id}
+                  onClick={() => router.push(`/member/charts?symbol=${baseOf(t.symbol)}&trade=${t.id}`)}
+                  title="Open on charts"
+                  className="border-b border-border/50 hover:bg-elevated/50 transition-colors cursor-pointer"
+                >
                   <td className="px-5 py-3.5 font-mono font-medium text-text">
-                    {t.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '')}
+                    {baseOf(t.symbol)}
                   </td>
                   <td className="px-5 py-3.5"><Badge variant={side}>{side.toUpperCase()}</Badge></td>
-                  <td className="px-5 py-3.5 font-mono text-text">{fmtPrice(t.entry)}</td>
-                  <td className="px-5 py-3.5 font-mono text-muted">{t.exit_price ? fmtPrice(t.exit_price) : '—'}</td>
-                  <td className="px-5 py-3.5 font-mono">
+                  <td className="px-5 py-3.5 font-mono text-text text-right tabular-nums">{fmtPrice(t.entry)}</td>
+                  <td className="px-5 py-3.5 font-mono text-muted text-right tabular-nums">{t.exit_price ? fmtPrice(t.exit_price) : '—'}</td>
+                  <td className="px-5 py-3.5 font-mono text-right tabular-nums">
                     <span className={`font-semibold ${pnl >= 0 ? 'text-green' : 'text-red'}`}>{fmtPnl(pnl)}</span>
                   </td>
                   <td className="px-5 py-3.5 text-muted text-xs">{fmtDate(t.opened_at)}</td>
@@ -202,11 +278,13 @@ function HistoryTab({ trades, totalPnl, allTrades }: { trades: Trade[]; totalPnl
                 </tr>
               );
             })}
-            {trades.length === 0 && (
+            {sorted.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-5 py-12 text-center">
                   <ListOrdered size={28} className="text-muted mx-auto mb-2" />
-                  <p className="text-muted text-sm">No closed trades yet.</p>
+                  <p className="text-muted text-sm">
+                    {filtersActive ? 'No trades match the current filters.' : 'No closed trades yet.'}
+                  </p>
                 </td>
               </tr>
             )}

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/lib/api';
 import Image from 'next/image';
+import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function LoginPage() {
                 value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 className="w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text font-sans text-sm
-                           placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20
+                           placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
                            transition-colors duration-150"
               />
             </div>
@@ -60,7 +61,7 @@ export default function LoginPage() {
                 value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text font-sans text-sm
-                           placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20
+                           placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
                            transition-colors duration-150"
               />
             </div>
@@ -71,14 +72,9 @@ export default function LoginPage() {
               </p>
             )}
 
-            <button
-              type="submit" disabled={loading}
-              className="w-full bg-green text-bg font-sans font-semibold py-2.5 rounded-lg
-                         hover:bg-green/90 disabled:opacity-50 disabled:cursor-not-allowed
-                         transition-colors duration-150 cursor-pointer mt-1"
-            >
+            <Button type="submit" disabled={loading} size="md" className="w-full mt-1">
               {loading ? 'Signing in…' : 'Sign in'}
-            </button>
+            </Button>
           </form>
         </div>
 

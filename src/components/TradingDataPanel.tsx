@@ -128,8 +128,8 @@ export function TradingDataPanel({ accountId, exchange, openPositions, canTrade,
                 </span>
               )}
               {t === 'Open Orders' && cache[t] != null && (
-                <span className={`ml-1.5 font-mono text-[10px] px-1 py-0.5 rounded ${
-                  (cache[t]?.length ?? 0) > 0 ? 'bg-yellow-400/15 text-yellow-400' : 'bg-elevated text-muted'
+                <span className={`ml-1.5 font-mono text-[10px] px-1 py-0.5 rounded tabular-nums ${
+                  (cache[t]?.length ?? 0) > 0 ? 'bg-warn/15 text-warn' : 'bg-elevated text-muted'
                 }`}>
                   {cache[t]?.length ?? 0}
                 </span>
@@ -274,9 +274,10 @@ function PositionsTable({ rows, canTrade, onClose, closingPos }: {
       <table className="w-full text-xs font-sans min-w-[760px]">
         <thead>
           <tr className="border-b border-border/60">
-            {['Symbol', 'Side', 'Entry', 'Trail SL', 'Peak', 'Unrealized', 'Bars', canTrade ? 'Action' : ''].filter(Boolean).map(h => (
-              <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
-            ))}
+            {['Symbol', 'Side', 'Entry', 'Trail SL', 'Peak', 'Unrealized', 'Bars', canTrade ? 'Action' : ''].filter(Boolean).map(h => {
+              const num = ['Entry', 'Trail SL', 'Peak', 'Unrealized', 'Bars'].includes(h);
+              return <th key={h} className={`text-muted font-medium px-4 py-2 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+            })}
           </tr>
         </thead>
         <tbody>
@@ -300,22 +301,22 @@ function PositionsTable({ rows, canTrade, onClose, closingPos }: {
                     {p.side?.toUpperCase()}
                   </span>
                 </td>
-                <td className="px-4 py-2 font-mono text-text">{fmtPrice(p.entry)}</td>
-                <td className="px-4 py-2 font-mono text-muted">{p.trail_sl ? fmtPrice(p.trail_sl) : '—'}</td>
-                <td className="px-4 py-2 font-mono text-muted">{p.peak ? fmtPrice(p.peak) : '—'}</td>
-                <td className={`px-4 py-2 font-mono font-semibold ${color}`}>
+                <td className="px-4 py-2 font-mono text-text text-right tabular-nums">{fmtPrice(p.entry)}</td>
+                <td className="px-4 py-2 font-mono text-muted text-right tabular-nums">{p.trail_sl ? fmtPrice(p.trail_sl) : '—'}</td>
+                <td className="px-4 py-2 font-mono text-muted text-right tabular-nums">{p.peak ? fmtPrice(p.peak) : '—'}</td>
+                <td className={`px-4 py-2 font-mono font-semibold text-right tabular-nums ${color}`}>
                   {uUsdt == null ? '—' : (
                     <>
                       {sign}${uUsdt.toFixed(3)}
                       {uPct != null && (
-                        <span className="text-muted font-normal ml-1 text-[10px]">
+                        <span className="text-muted font-normal ml-1 text-[11px]">
                           ({sign}{uPct.toFixed(2)}%)
                         </span>
                       )}
                     </>
                   )}
                 </td>
-                <td className="px-4 py-2 font-mono text-muted">{p.bar_count}</td>
+                <td className="px-4 py-2 font-mono text-muted text-right tabular-nums">{p.bar_count}</td>
                 {canTrade && (
                   <td className="px-4 py-2">
                     <button
@@ -346,15 +347,16 @@ function OrdersTable({ rows, loaded }: { rows: ExOrder[]; loaded: boolean }) {
     <table className="w-full text-xs font-sans">
       <thead>
         <tr className="border-b border-border/60">
-          {['Time', 'Symbol', 'Type', 'Side', 'Amount', 'Price', 'Status'].map(h => (
-            <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
-          ))}
+          {['Time', 'Symbol', 'Type', 'Side', 'Amount', 'Price', 'Status'].map(h => {
+            const num = ['Amount', 'Price'].includes(h);
+            return <th key={h} className={`text-muted font-medium px-4 py-2 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+          })}
         </tr>
       </thead>
       <tbody>
         {rows.map((o, i) => (
           <tr key={o.id ?? i} className="border-b border-border/30 hover:bg-elevated/40">
-            <td className="px-4 py-2 text-muted font-mono">{fmtTs(o.timestamp)}</td>
+            <td className="px-4 py-2 text-muted font-mono tabular-nums">{fmtTs(o.timestamp)}</td>
             <td className="px-4 py-2 font-mono text-text">{symBase(o.symbol)}</td>
             <td className="px-4 py-2 text-muted capitalize">{o.type}</td>
             <td className="px-4 py-2">
@@ -362,8 +364,8 @@ function OrdersTable({ rows, loaded }: { rows: ExOrder[]; loaded: boolean }) {
                 {o.side?.toUpperCase()}
               </span>
             </td>
-            <td className="px-4 py-2 font-mono text-text">{o.amount?.toFixed(4)}</td>
-            <td className="px-4 py-2 font-mono text-text">{o.price ? fmtPrice(o.price) : 'Market'}</td>
+            <td className="px-4 py-2 font-mono text-text text-right tabular-nums">{o.amount?.toFixed(4)}</td>
+            <td className="px-4 py-2 font-mono text-text text-right tabular-nums">{o.price ? fmtPrice(o.price) : 'Market'}</td>
             <td className="px-4 py-2 text-muted capitalize">{o.status}</td>
           </tr>
         ))}
@@ -382,24 +384,25 @@ function TradeHistoryTable({ rows, loaded }: { rows: Trade[]; loaded: boolean })
     <table className="w-full text-xs font-sans">
       <thead>
         <tr className="border-b border-border/60">
-          {['Date', 'Symbol', 'Side', 'Entry', 'Exit', 'P&L'].map(h => (
-            <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
-          ))}
+          {['Date', 'Symbol', 'Side', 'Entry', 'Exit', 'P&L'].map(h => {
+            const num = ['Entry', 'Exit', 'P&L'].includes(h);
+            return <th key={h} className={`text-muted font-medium px-4 py-2 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+          })}
         </tr>
       </thead>
       <tbody>
         {rows.map((t, i) => (
           <tr key={t.id ?? i} className="border-b border-border/30 hover:bg-elevated/40">
-            <td className="px-4 py-2 text-muted font-mono">{fmtDate(t.closed_at ?? t.opened_at)}</td>
+            <td className="px-4 py-2 text-muted font-mono tabular-nums">{fmtDate(t.closed_at ?? t.opened_at)}</td>
             <td className="px-4 py-2 font-mono text-text">{symBase(t.symbol)}</td>
             <td className="px-4 py-2">
               <span className={`font-mono font-semibold ${t.side === 'long' ? 'text-green' : 'text-red'}`}>
                 {t.side?.toUpperCase()}
               </span>
             </td>
-            <td className="px-4 py-2 font-mono text-text">{fmtPrice(t.entry)}</td>
-            <td className="px-4 py-2 font-mono text-muted">{t.exit_price ? fmtPrice(t.exit_price) : '—'}</td>
-            <td className={`px-4 py-2 font-mono font-semibold ${(t.pnl ?? 0) >= 0 ? 'text-green' : 'text-red'}`}>
+            <td className="px-4 py-2 font-mono text-text text-right tabular-nums">{fmtPrice(t.entry)}</td>
+            <td className="px-4 py-2 font-mono text-muted text-right tabular-nums">{t.exit_price ? fmtPrice(t.exit_price) : '—'}</td>
+            <td className={`px-4 py-2 font-mono font-semibold text-right tabular-nums ${(t.pnl ?? 0) >= 0 ? 'text-green' : 'text-red'}`}>
               {t.pnl != null ? fmtPnl(t.pnl) : '—'}
             </td>
           </tr>
@@ -419,25 +422,26 @@ function ExTradeTable({ rows, loaded }: { rows: ExTrade[]; loaded: boolean }) {
     <table className="w-full text-xs font-sans">
       <thead>
         <tr className="border-b border-border/60">
-          {['Time', 'Symbol', 'Side', 'Price', 'Amount', 'Value', 'Fee'].map(h => (
-            <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
-          ))}
+          {['Time', 'Symbol', 'Side', 'Price', 'Amount', 'Value', 'Fee'].map(h => {
+            const num = ['Price', 'Amount', 'Value', 'Fee'].includes(h);
+            return <th key={h} className={`text-muted font-medium px-4 py-2 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+          })}
         </tr>
       </thead>
       <tbody>
         {rows.map((t, i) => (
           <tr key={t.id ?? i} className="border-b border-border/30 hover:bg-elevated/40">
-            <td className="px-4 py-2 text-muted font-mono">{fmtTs(t.timestamp)}</td>
+            <td className="px-4 py-2 text-muted font-mono tabular-nums">{fmtTs(t.timestamp)}</td>
             <td className="px-4 py-2 font-mono text-text">{symBase(t.symbol)}</td>
             <td className="px-4 py-2">
               <span className={`font-mono font-semibold ${t.side === 'buy' ? 'text-green' : 'text-red'}`}>
                 {t.side?.toUpperCase()}
               </span>
             </td>
-            <td className="px-4 py-2 font-mono text-text">{fmtPrice(t.price)}</td>
-            <td className="px-4 py-2 font-mono text-text">{t.amount?.toFixed(4)}</td>
-            <td className="px-4 py-2 font-mono text-muted">${t.cost?.toFixed(2)}</td>
-            <td className="px-4 py-2 font-mono text-muted">
+            <td className="px-4 py-2 font-mono text-text text-right tabular-nums">{fmtPrice(t.price)}</td>
+            <td className="px-4 py-2 font-mono text-text text-right tabular-nums">{t.amount?.toFixed(4)}</td>
+            <td className="px-4 py-2 font-mono text-muted text-right tabular-nums">${t.cost?.toFixed(2)}</td>
+            <td className="px-4 py-2 font-mono text-muted text-right tabular-nums">
               {t.fee ? `$${t.fee.cost.toFixed(4)}` : '—'}
             </td>
           </tr>
@@ -457,17 +461,18 @@ function TxTable({ rows, loaded }: { rows: ExTx[]; loaded: boolean }) {
     <table className="w-full text-xs font-sans">
       <thead>
         <tr className="border-b border-border/60">
-          {['Time', 'Type', 'Amount', 'Currency'].map(h => (
-            <th key={h} className="text-left text-muted font-medium px-4 py-2">{h}</th>
-          ))}
+          {['Time', 'Type', 'Amount', 'Currency'].map(h => {
+            const num = h === 'Amount';
+            return <th key={h} className={`text-muted font-medium px-4 py-2 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+          })}
         </tr>
       </thead>
       <tbody>
         {rows.map((t, i) => (
           <tr key={t.id ?? i} className="border-b border-border/30 hover:bg-elevated/40">
-            <td className="px-4 py-2 text-muted font-mono">{fmtTs(t.timestamp)}</td>
+            <td className="px-4 py-2 text-muted font-mono tabular-nums">{fmtTs(t.timestamp)}</td>
             <td className="px-4 py-2 text-text capitalize">{t.type}</td>
-            <td className={`px-4 py-2 font-mono font-semibold ${t.amount >= 0 ? 'text-green' : 'text-red'}`}>
+            <td className={`px-4 py-2 font-mono font-semibold text-right tabular-nums ${t.amount >= 0 ? 'text-green' : 'text-red'}`}>
               {t.amount >= 0 ? '+' : ''}{t.amount?.toFixed(6)}
             </td>
             <td className="px-4 py-2 font-mono text-muted">{t.currency}</td>

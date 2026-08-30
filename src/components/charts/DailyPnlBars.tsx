@@ -27,26 +27,26 @@ export function DailyPnlBars({ trades }: Props) {
       <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
         <XAxis
           dataKey="day"
-          tick={{ fill: '#94A3B8', fontSize: 10 }}
+          tick={{ fill: '#8A8A8A', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: '#94A3B8', fontSize: 10 }}
+          tick={{ fill: '#8A8A8A', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) => `$${v}`}
           width={48}
         />
         <Tooltip
-          contentStyle={{ background: '#0F172A', border: '1px solid #334155', borderRadius: 8, fontSize: 12, color: '#F8FAFC' }}
+          contentStyle={{ background: '#0A0A0A', border: '1px solid #1E1E1E', borderRadius: 8, fontSize: 12, color: '#FFFFFF' }}
           formatter={(v: number) => [`$${v.toFixed(2)}`, 'Daily P&L']}
-          labelStyle={{ color: '#94A3B8' }}
-          cursor={{ fill: '#1E293B' }}
+          labelStyle={{ color: '#8A8A8A' }}
+          cursor={{ fill: '#141414' }}
         />
         <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={32}>
           {data.map((entry, i) => (
-            <Cell key={i} fill={entry.pnl >= 0 ? '#22C55E' : '#EF4444'} fillOpacity={0.8} />
+            <Cell key={i} fill={entry.pnl >= 0 ? '#00FF41' : '#FF3131'} fillOpacity={0.8} />
           ))}
         </Bar>
       </BarChart>

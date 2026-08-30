@@ -30,7 +30,7 @@ export function Sparkline({ data, color = 'auto', width = 200, height = 28 }: Pr
 
   const trend = data[data.length - 1] >= data[0] ? 'up' : 'down';
   const strokeColor =
-    color === 'auto' ? (trend === 'up' ? '#10D960' : '#FF3131') : color;
+    color === 'auto' ? (trend === 'up' ? '#00FF41' : '#FF3131') : color;
   const fillColor = strokeColor + '22';     // subtle area fill
 
   // Build closed polygon for fill

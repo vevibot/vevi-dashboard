@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { getOverview, getMyDashboard } from '@/lib/api';
 import {
   LayoutDashboard, Users, Settings, LogOut,
   TrendingUp, ListOrdered, BarChart2, Activity, Briefcase, CalendarDays,
@@ -11,6 +12,16 @@ import {
 import Image from 'next/image';
 
 interface NavItem { href: string; label: string; icon: React.ReactNode; }
+
+// Real connection health — derived from the last successful data poll.
+export type ConnStatus = 'live' | 'stale' | 'offline' | 'unknown';
+
+const STATUS_META: Record<ConnStatus, { label: string; color: string; dot: string; ping: boolean }> = {
+  live:    { label: 'LIVE',    color: 'text-green', dot: 'bg-green', ping: true  },
+  stale:   { label: 'STALE',   color: 'text-warn',  dot: 'bg-warn',  ping: false },
+  offline: { label: 'OFFLINE', color: 'text-red',   dot: 'bg-red',   ping: false },
+  unknown: { label: '···',     color: 'text-muted', dot: 'bg-muted', ping: false },
+};
 
 const adminNav: NavItem[] = [
   { href: '/admin',            label: 'Overview',     icon: <LayoutDashboard size={16} /> },
@@ -37,11 +48,42 @@ export function Sidebar({ role }: Props) {
 
   const [email, setEmail]       = useState<string>('');
   const [mobileOpen, setOpen]   = useState(false);
+  const [status, setStatus]     = useState<ConnStatus>('unknown');
+  const lastOkRef  = useRef(0);
+  const lastErrRef = useRef(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setEmail(localStorage.getItem('vevi_email') || '');
   }, []);
+
+  // Connection health: poll the role-appropriate endpoint and grade freshness.
+  // green LIVE (<60s) · amber STALE (60s–5min) · red OFFLINE (>5min or errored).
+  useEffect(() => {
+    let stopped = false;
+    const compute = () => {
+      const ok = lastOkRef.current, err = lastErrRef.current;
+      if (ok === 0 && err === 0) { setStatus('unknown'); return; }
+      if (err > ok)              { setStatus('offline'); return; }
+      const age = Date.now() - ok;
+      setStatus(age < 60_000 ? 'live' : age < 300_000 ? 'stale' : 'offline');
+    };
+    const ping = async () => {
+      try {
+        if (role === 'admin') await getOverview(); else await getMyDashboard();
+        lastOkRef.current = Date.now();
+      } catch {
+        lastErrRef.current = Date.now();
+      }
+      if (!stopped) compute();
+    };
+    ping();
+    const pv = setInterval(ping, 30_000);      // re-poll backend
+    const cv = setInterval(compute, 10_000);   // re-grade staleness between polls
+    return () => { stopped = true; clearInterval(pv); clearInterval(cv); };
+  }, [role]);
+
+  const statusMeta = STATUS_META[status];
 
   // Close mobile drawer on route change
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -75,9 +117,9 @@ export function Sidebar({ role }: Props) {
         </button>
         <div className="flex items-center gap-2">
           <Image src="/vevi-logo.svg" alt="Vevi" width={72} height={20} priority />
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse-slow" />
-            <span className="text-[9px] font-mono font-bold text-green tracking-wider">LIVE</span>
+          <span className="flex items-center gap-1" title={`Backend connection: ${statusMeta.label}`}>
+            <span className={cn('w-1.5 h-1.5 rounded-full', statusMeta.dot, statusMeta.ping && 'animate-pulse-slow')} />
+            <span className={cn('text-[9px] font-mono font-bold tracking-wider', statusMeta.color)}>{statusMeta.label}</span>
           </span>
         </div>
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green/20 to-green/5 border border-green/30 flex items-center justify-center">
@@ -113,6 +155,7 @@ export function Sidebar({ role }: Props) {
           email={email}
           initial={initial}
           logout={logout}
+          status={status}
           onItemClick={() => setOpen(false)}
           showClose
           onClose={() => setOpen(false)}
@@ -128,6 +171,7 @@ export function Sidebar({ role }: Props) {
           email={email}
           initial={initial}
           logout={logout}
+          status={status}
         />
       </aside>
     </>
@@ -135,7 +179,7 @@ export function Sidebar({ role }: Props) {
 }
 
 function SidebarBody({
-  role, nav, pathname, email, initial, logout, onItemClick, showClose, onClose,
+  role, nav, pathname, email, initial, logout, status, onItemClick, showClose, onClose,
 }: {
   role: 'admin' | 'member';
   nav: NavItem[];
@@ -143,10 +187,12 @@ function SidebarBody({
   email: string;
   initial: string;
   logout: () => void;
+  status: ConnStatus;
   onItemClick?: () => void;
   showClose?: boolean;
   onClose?: () => void;
 }) {
+  const meta = STATUS_META[status];
   return (
     <>
       {/* Brand */}
@@ -154,12 +200,14 @@ function SidebarBody({
         <div className="flex items-center justify-between mb-1.5">
           <Image src="/vevi-logo.svg" alt="Vevi" width={92} height={25} priority />
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5" title={`Backend connection: ${meta.label}`}>
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-green opacity-60 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green" />
+                {meta.ping && (
+                  <span className={cn('absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping', meta.dot)} />
+                )}
+                <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', meta.dot)} />
               </span>
-              <span className="text-[9px] font-mono font-bold text-green tracking-wider">LIVE</span>
+              <span className={cn('text-[9px] font-mono font-bold tracking-wider', meta.color)}>{meta.label}</span>
             </span>
             {showClose && (
               <button onClick={onClose} aria-label="Close menu"
@@ -180,7 +228,7 @@ function SidebarBody({
             <p className="text-[11px] text-text font-sans truncate leading-tight" title={email || 'signed in'}>
               {email || 'signed in'}
             </p>
-            <p className="text-[9px] text-muted/80 font-mono tracking-wide mt-0.5">
+            <p className="text-[11px] text-muted font-mono tracking-wide mt-0.5">
               {role === 'admin' ? 'ADMINISTRATOR' : 'MEMBER'}
             </p>
           </div>
@@ -199,7 +247,7 @@ function SidebarBody({
               className={cn(
                 'flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-lg text-sm font-sans transition-colors duration-150 cursor-pointer',
                 active
-                  ? 'bg-green/10 text-green border border-green/20'
+                  ? 'bg-accent/10 text-accent border border-accent/20'
                   : 'text-muted hover:bg-elevated hover:text-text border border-transparent active:bg-elevated',
               )}
             >

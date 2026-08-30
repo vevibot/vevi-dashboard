@@ -18,7 +18,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'sltp',   label: 'SL / TP'},
 ];
 
-const input = 'w-full bg-elevated border border-border rounded-lg px-3 py-2 text-text font-mono text-sm placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20';
+const input = 'w-full bg-elevated border border-border rounded-lg px-3 py-2 text-text font-mono text-sm placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20';
 const label = 'text-muted text-xs font-sans mb-1 block';
 
 export function OrderPanel({ accountId, symbol, exchange, onDone }: Props) {

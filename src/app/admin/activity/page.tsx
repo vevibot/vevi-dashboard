@@ -131,7 +131,7 @@ export default function ActivityPage() {
               value={selectedAcc || ''}
               onChange={(e) => setSelectedAcc(e.target.value)}
               className="appearance-none bg-surface border border-border rounded-lg pl-3 pr-9 py-2 text-text font-sans text-sm cursor-pointer
-                         focus:outline-none focus:border-green/50 hover:border-text/30 transition-colors"
+                         focus:outline-none focus:border-accent/50 hover:border-text/30 transition-colors"
             >
               {accounts.map(a => (
                 <option key={a.id} value={a.id} className="bg-surface">

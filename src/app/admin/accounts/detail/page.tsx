@@ -116,9 +116,9 @@ function AccountDetailPage() {
             <span className={`inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded border ${
               snap.is_active
                 ? 'bg-green/10 text-green border-green/30'
-                : 'bg-slate-500/10 text-muted border-slate-600/30'
+                : 'bg-elevated text-muted border-border'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${snap.is_active ? 'bg-green animate-pulse-slow' : 'bg-slate-500'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${snap.is_active ? 'bg-green animate-pulse-slow' : 'bg-muted'}`} />
               {snap.is_active ? 'Active' : 'Paused'}
             </span>
             {account?.exchange && (

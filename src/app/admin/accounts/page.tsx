@@ -325,7 +325,7 @@ function AccountDrawer({ snap, exchange, onClose, onTrade, onRefresh }: {
               <h3 className="text-muted text-xs font-medium uppercase tracking-wider">
                 New Trade
               </h3>
-              <p className="text-[10px] text-muted/70 font-sans">
+              <p className="text-[11px] text-muted font-sans">
                 <span className="font-mono text-green">●</span> = bot is trading
               </p>
             </div>
@@ -430,7 +430,7 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
               <input
                 type={type} placeholder={placeholder} {...field(key)}
                 className="w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text text-sm
-                           placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20
+                           placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
                            transition-colors duration-150"
               />
             </div>
@@ -466,7 +466,7 @@ function AddAccountModal({ onClose }: { onClose: () => void }) {
               <input
                 type={type} placeholder={placeholder} {...field(key)}
                 className="w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text text-sm
-                           placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20
+                           placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20
                            transition-colors duration-150"
               />
             </div>
@@ -519,7 +519,7 @@ function EditAccountModal({ account, onClose }: { account: Account; onClose: () 
     }
   }
 
-  const inp = 'w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text text-sm placeholder:text-muted/40 focus:outline-none focus:border-green/50 focus:ring-1 focus:ring-green/20 transition-colors duration-150';
+  const inp = 'w-full bg-elevated border border-border rounded-lg px-3 py-2.5 text-text text-sm placeholder:text-muted/40 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors duration-150';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

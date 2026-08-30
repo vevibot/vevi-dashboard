@@ -12,6 +12,10 @@ import { Briefcase, Radio, CheckCircle2, XCircle, Loader2, ChevronDown, Download
 import { MANUAL_TRADE_BASES_UNIQUE, toUsdtPerp, isStrategySymbol } from '@/lib/symbols';
 import { exportTradesCSV } from '@/lib/csvExport';
 import { ExchangePnlPanel } from '@/components/ExchangePnlPanel';
+import {
+  TradeFilterBar, SortTh, baseOf, DATE_MS,
+  type SortKey, type SortDir, type DirFilter, type DateFilter,
+} from '@/components/TradeFilters';
 import type { Trade } from '@/lib/api';
 
 // Broadcast trade picker — full manual catalogue, not limited to strategy 10.
@@ -74,7 +78,7 @@ function BroadcastPanel() {
 
   const reset = () => { setResults(null); setError(''); };
 
-  const inputCls = 'bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-green/60';
+  const inputCls = 'bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-accent/60';
 
   return (
     <div className="bg-surface border border-border rounded-xl mb-6 overflow-hidden">
@@ -176,14 +180,14 @@ function BroadcastPanel() {
 
             {/* SL */}
             <div className="flex flex-col gap-1.5 w-32">
-              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Stop Loss <span className="normal-case text-muted/60">(opt)</span></label>
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Stop Loss <span className="normal-case text-muted">(opt)</span></label>
               <input type="number" value={sl} onChange={e => setSl(e.target.value)}
                 className={`${inputCls}`} placeholder="0.000" />
             </div>
 
             {/* TP */}
             <div className="flex flex-col gap-1.5 w-32">
-              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Take Profit <span className="normal-case text-muted/60">(opt)</span></label>
+              <label className="text-[11px] text-muted font-sans uppercase tracking-wide">Take Profit <span className="normal-case text-muted">(opt)</span></label>
               <input type="number" value={tp} onChange={e => setTp(e.target.value)}
                 className={`${inputCls}`} placeholder="0.000" />
             </div>
@@ -265,6 +269,8 @@ export default function AdminTradesPage() {
 
     const iv = setInterval(() => {
       getOverview().then(setOverview).catch(() => {});
+      // Poll closed trades too so History updates live without a reload.
+      getAdminTrades(200).then((tr) => setTrades(tr.trades)).catch(() => {});
     }, 15_000);
     return () => clearInterval(iv);
   }, []);
@@ -514,9 +520,10 @@ function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: ()
       <table className="w-full text-sm font-sans min-w-[800px]">
         <thead>
           <tr className="border-b border-border">
-            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration', 'Accounts', 'Close'].map((h) => (
-              <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
-            ))}
+            {['Symbol', 'Side', 'Entry', 'Current', 'Unreal. P&L', 'SL', 'TP', 'Duration', 'Accounts', 'Close'].map((h) => {
+              const num = ['Entry', 'Current', 'Unreal. P&L', 'SL', 'TP'].includes(h);
+              return <th key={h} className={`text-muted text-xs font-medium px-5 py-3 ${num ? 'text-right' : 'text-left'}`}>{h}</th>;
+            })}
           </tr>
         </thead>
         <tbody>
@@ -537,11 +544,11 @@ function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: ()
                   <span className="ml-2 text-[10px] bg-green/10 text-green border border-green/20 rounded px-1 py-0.5">OPEN</span>
                 </td>
                 <td className="px-5 py-3.5"><Badge variant={rep.side as 'long'|'short'}>{rep.side.toUpperCase()}</Badge></td>
-                <td className="px-5 py-3.5 font-mono text-text">{fmtPrice(rep.entry)}</td>
-                <td className="px-5 py-3.5 font-mono text-text">
+                <td className="px-5 py-3.5 font-mono text-text text-right tabular-nums">{fmtPrice(rep.entry)}</td>
+                <td className="px-5 py-3.5 font-mono text-text text-right tabular-nums">
                   {rep.current_price ? fmtPrice(rep.current_price) : <span className="text-muted">—</span>}
                 </td>
-                <td className="px-5 py-3.5 font-mono">
+                <td className="px-5 py-3.5 font-mono text-right tabular-nums">
                   {pct !== null ? (
                     <span className={`font-semibold ${pctPos ? 'text-green' : 'text-red'}`}>
                       {pctPos ? '+' : ''}{pct.toFixed(2)}%
@@ -550,8 +557,8 @@ function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: ()
                     <span className="text-muted text-xs">syncing…</span>
                   )}
                 </td>
-                <td className="px-5 py-3.5 font-mono text-muted">{fmtPrice(rep.sl)}</td>
-                <td className="px-5 py-3.5 font-mono text-muted">{rep.tp ? fmtPrice(rep.tp) : '—'}</td>
+                <td className="px-5 py-3.5 font-mono text-muted text-right tabular-nums">{fmtPrice(rep.sl)}</td>
+                <td className="px-5 py-3.5 font-mono text-muted text-right tabular-nums">{rep.tp ? fmtPrice(rep.tp) : '—'}</td>
                 <td className="px-5 py-3.5 text-muted text-xs">{duration(openedAt)}</td>
                 <td className="px-5 py-3.5">
                   <AccountsCell group={group} symbol={symbol} onRefresh={onRefresh} />
@@ -577,29 +584,51 @@ function HistoryTab({ trades, allTrades, accounts }: {
   allTrades: AdminTrade[];
   accounts: AcctOpt[];
 }) {
+  const router = useRouter();
   const [selectedAcc, setSelectedAcc] = useState<string>('all');   // 'all' or account_id
+  const [symFilter, setSymFilter]   = useState('all');
+  const [dirFilter, setDirFilter]   = useState<DirFilter>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'opened', dir: 'desc' });
 
-  // Filter both the closed-trade list and the all-trade (for equity chart)
-  const filteredClosed = selectedAcc === 'all'
-    ? trades
-    : trades.filter(t => t.account_id === selectedAcc);
-  const filteredAll = selectedAcc === 'all'
-    ? allTrades
-    : allTrades.filter(t => t.account_id === selectedAcc);
+  // 1) account filter (composed with the extra filters below)
+  const accClosed = selectedAcc === 'all' ? trades : trades.filter(t => t.account_id === selectedAcc);
+  const accAll    = selectedAcc === 'all' ? allTrades : allTrades.filter(t => t.account_id === selectedAcc);
+
+  // 2) symbol / direction / date filters
+  const symbolOptions = Array.from(new Set(accClosed.map(t => baseOf(t.symbol)))).sort();
+  const dateCut = dateFilter === 'all' ? 0 : Date.now() - DATE_MS[dateFilter];
+  const matches = (t: AdminTrade) =>
+    (symFilter === 'all' || baseOf(t.symbol) === symFilter) &&
+    (dirFilter === 'all' || t.side === dirFilter) &&
+    (dateCut === 0 || new Date(t.closed_at ?? t.opened_at).getTime() >= dateCut);
+
+  const filteredClosed = accClosed.filter(matches);
   const filteredPnl = filteredClosed.reduce((s, t) => s + (t.pnl ?? 0), 0);
+
+  // 3) sort
+  const sorted = [...filteredClosed].sort((a, b) => {
+    let av: number | string, bv: number | string;
+    if (sort.key === 'pnl')          { av = a.pnl ?? 0; bv = b.pnl ?? 0; }
+    else if (sort.key === 'symbol')  { av = baseOf(a.symbol); bv = baseOf(b.symbol); }
+    else                             { av = new Date(a.opened_at).getTime(); bv = new Date(b.opened_at).getTime(); }
+    if (av < bv) return sort.dir === 'asc' ? -1 : 1;
+    if (av > bv) return sort.dir === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   const selectedAcct = accounts.find(a => a.id === selectedAcc);
   const headerLabel  = selectedAcc === 'all' ? 'All Accounts' : (selectedAcct?.name ?? '—');
 
   function downloadCSV() {
-    if (filteredClosed.length === 0) return;
+    if (sorted.length === 0) return;
     const meta = {
       accountName:  selectedAcc === 'all' ? 'all-accounts' : (selectedAcct?.name ?? 'account'),
       accountEmail: selectedAcc === 'all' ? '(combined across all accounts)' : (selectedAcct?.email ?? ''),
       exporterRole: 'admin' as const,
     };
     // exportTradesCSV expects Trade[], AdminTrade extends Trade so it's compatible.
-    exportTradesCSV(filteredClosed as unknown as Trade[], meta);
+    exportTradesCSV(sorted as unknown as Trade[], meta);
   }
 
   return (
@@ -607,8 +636,8 @@ function HistoryTab({ trades, allTrades, accounts }: {
       {/* Exchange-side truth (BingX) — only shown when an account is selected */}
       {selectedAcc === 'all' ? (
         accounts.length > 0 && (
-          <div className="bg-surface border border-yellow/30 rounded-xl p-4 mb-6 flex items-start gap-3">
-            <Shield size={16} className="text-yellow mt-0.5 shrink-0" />
+          <div className="bg-surface border border-warn/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <Shield size={16} className="text-warn mt-0.5 shrink-0" />
             <div>
               <p className="text-text text-sm font-sans font-medium">
                 Exchange-side P&L is per-account
@@ -678,33 +707,52 @@ function HistoryTab({ trades, allTrades, accounts }: {
             </div>
             <span className="text-xs text-muted font-sans">{filteredClosed.length} closed trades</span>
           </div>
-          <EquityChart trades={filteredAll} />
+          <EquityChart trades={filteredClosed} />
         </div>
       )}
+
+      {/* Symbol / direction / date filter bar */}
+      <TradeFilterBar
+        symbols={symbolOptions}
+        sym={symFilter} setSym={setSymFilter}
+        dir={dirFilter} setDir={setDirFilter}
+        date={dateFilter} setDate={setDateFilter}
+        count={filteredClosed.length}
+      />
 
       <div className="bg-surface border border-border rounded-xl overflow-x-auto">
         <table className="w-full text-sm font-sans min-w-[800px]">
           <thead>
             <tr className="border-b border-border">
-              {['Account', 'Symbol', 'Side', 'Entry', 'Exit', 'P&L', 'Opened', 'Closed'].map((h) => (
-                <th key={h} className="text-left text-muted text-xs font-medium px-5 py-3">{h}</th>
-              ))}
+              <th className="text-muted text-xs font-medium px-5 py-3 text-left">Account</th>
+              <SortTh label="Symbol" col="symbol" sort={sort} setSort={setSort} />
+              <th className="text-muted text-xs font-medium px-5 py-3 text-left">Side</th>
+              <th className="text-muted text-xs font-medium px-5 py-3 text-right">Entry</th>
+              <th className="text-muted text-xs font-medium px-5 py-3 text-right">Exit</th>
+              <SortTh label="P&L" col="pnl" sort={sort} setSort={setSort} align="right" />
+              <SortTh label="Opened" col="opened" sort={sort} setSort={setSort} />
+              <th className="text-muted text-xs font-medium px-5 py-3 text-left">Closed</th>
             </tr>
           </thead>
           <tbody>
-            {filteredClosed.map((t) => {
+            {sorted.map((t) => {
               const side = t.side === 'buy' ? 'long' : 'short';
               const pnl  = t.pnl ?? 0;
               return (
-                <tr key={t.id} className="border-b border-border/50 hover:bg-elevated/50 transition-colors">
+                <tr
+                  key={t.id}
+                  onClick={() => router.push(`/admin/charts?symbol=${baseOf(t.symbol)}&trade=${t.id}`)}
+                  title="Open on charts"
+                  className="border-b border-border/50 hover:bg-elevated/50 transition-colors cursor-pointer"
+                >
                   <td className="px-5 py-3.5 text-text text-sm font-sans">{t.account_name}</td>
                   <td className="px-5 py-3.5 font-mono font-medium text-text">
-                    {t.symbol.replace('/USDT:USDT', '').replace('/USDC:USDC', '')}
+                    {baseOf(t.symbol)}
                   </td>
                   <td className="px-5 py-3.5"><Badge variant={side}>{side.toUpperCase()}</Badge></td>
-                  <td className="px-5 py-3.5 font-mono text-text">{fmtPrice(t.entry)}</td>
-                  <td className="px-5 py-3.5 font-mono text-muted">{t.exit_price ? fmtPrice(t.exit_price) : '—'}</td>
-                  <td className="px-5 py-3.5 font-mono">
+                  <td className="px-5 py-3.5 font-mono text-text text-right tabular-nums">{fmtPrice(t.entry)}</td>
+                  <td className="px-5 py-3.5 font-mono text-muted text-right tabular-nums">{t.exit_price ? fmtPrice(t.exit_price) : '—'}</td>
+                  <td className="px-5 py-3.5 font-mono text-right tabular-nums">
                     <span className={`font-semibold ${pnl >= 0 ? 'text-green' : 'text-red'}`}>{fmtPnl(pnl)}</span>
                   </td>
                   <td className="px-5 py-3.5 text-muted text-xs">{fmtDate(t.opened_at)}</td>
@@ -712,12 +760,14 @@ function HistoryTab({ trades, allTrades, accounts }: {
                 </tr>
               );
             })}
-            {filteredClosed.length === 0 && (
+            {sorted.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-5 py-12 text-center">
                   <Briefcase size={28} className="text-muted mx-auto mb-2" />
                   <p className="text-muted text-sm">
-                    No closed trades {selectedAcc === 'all' ? 'yet' : `for ${headerLabel}`}.
+                    {symFilter !== 'all' || dirFilter !== 'all' || dateFilter !== 'all'
+                      ? 'No trades match the current filters.'
+                      : `No closed trades ${selectedAcc === 'all' ? 'yet' : `for ${headerLabel}`}.`}
                   </p>
                 </td>
               </tr>

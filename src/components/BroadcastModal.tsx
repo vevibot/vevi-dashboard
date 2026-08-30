@@ -63,7 +63,7 @@ export function BroadcastModal({ onClose }: Props) {
                 <label className="block text-xs text-muted font-sans mb-1.5">Symbol</label>
                 <select
                   value={symbol} onChange={e => setSymbol(e.target.value)}
-                  className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-green/60 cursor-pointer"
+                  className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent/60 cursor-pointer"
                 >
                   {SYMBOLS.map(s => {
                     const base = s.split('/')[0];
@@ -101,7 +101,7 @@ export function BroadcastModal({ onClose }: Props) {
                   <label className="block text-xs text-muted font-sans mb-1.5">USDT Amount</label>
                   <input
                     type="number" value={amount} onChange={e => setAmount(e.target.value)}
-                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent/60"
                     placeholder="10"
                   />
                 </div>
@@ -109,7 +109,7 @@ export function BroadcastModal({ onClose }: Props) {
                   <label className="block text-xs text-muted font-sans mb-1.5">Leverage</label>
                   <input
                     type="number" value={leverage} onChange={e => setLev(e.target.value)}
-                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent/60"
                     placeholder="20"
                   />
                 </div>
@@ -118,18 +118,18 @@ export function BroadcastModal({ onClose }: Props) {
               {/* SL + TP */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted font-sans mb-1.5">Stop Loss <span className="text-muted/60">(optional)</span></label>
+                  <label className="block text-xs text-muted font-sans mb-1.5">Stop Loss <span className="text-muted">(optional)</span></label>
                   <input
                     type="number" value={sl} onChange={e => setSl(e.target.value)}
-                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent/60"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted font-sans mb-1.5">Take Profit <span className="text-muted/60">(optional)</span></label>
+                  <label className="block text-xs text-muted font-sans mb-1.5">Take Profit <span className="text-muted">(optional)</span></label>
                   <input
                     type="number" value={tp} onChange={e => setTp(e.target.value)}
-                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-green/60"
+                    className="w-full bg-elevated border border-border rounded-lg px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent/60"
                     placeholder="0.00"
                   />
                 </div>

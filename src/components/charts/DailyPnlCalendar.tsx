@@ -53,7 +53,7 @@ export function DailyPnlCalendar({ trades }: Props) {
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} className="text-center text-[10px] font-mono text-muted py-1">{d}</div>
+          <div key={d} className="text-center text-[11px] font-mono text-muted py-1">{d}</div>
         ))}
       </div>
 
@@ -78,14 +78,14 @@ export function DailyPnlCalendar({ trades }: Props) {
                     : 'bg-red/10 border border-red/30'
                   : 'bg-surface border border-border'
                 }
-                ${isToday ? 'ring-1 ring-green/60' : ''}
+                ${isToday ? 'ring-1 ring-accent/60' : ''}
               `}
             >
-              <span className={`text-[11px] font-mono font-semibold leading-none ${isToday ? 'text-green' : 'text-muted'}`}>
+              <span className={`text-[11px] font-mono font-semibold leading-none ${isToday ? 'text-accent' : 'text-muted'}`}>
                 {day}
               </span>
               {hasTrades && (
-                <span className={`mt-auto text-[10px] font-mono font-semibold leading-tight ${positive ? 'text-green' : 'text-red'}`}>
+                <span className={`mt-auto text-[11px] font-mono font-semibold leading-tight tabular-nums ${positive ? 'text-green' : 'text-red'}`}>
                   {positive ? '+' : ''}{pnl!.toFixed(2)}
                 </span>
               )}
@@ -98,11 +98,11 @@ export function DailyPnlCalendar({ trades }: Props) {
       <div className="flex items-center gap-4 mt-3 justify-end">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-green/20 border border-green/30" />
-          <span className="text-[10px] text-muted font-sans">Profit day</span>
+          <span className="text-[11px] text-muted font-sans">Profit day</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-red/20 border border-red/30" />
-          <span className="text-[10px] text-muted font-sans">Loss day</span>
+          <span className="text-[11px] text-muted font-sans">Loss day</span>
         </div>
       </div>
     </div>

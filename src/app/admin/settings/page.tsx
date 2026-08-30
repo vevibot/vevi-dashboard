@@ -166,8 +166,8 @@ function Row({ label, value, sub, color }: { label: string; value: string | numb
   return (
     <div className="flex items-start justify-between py-2 border-b border-border/30 last:border-b-0">
       <div className="min-w-0 flex-1 pr-4">
-        <p className="text-text/80 text-xs font-sans">{label}</p>
-        {sub && <p className="text-muted/70 text-[10px] font-sans mt-0.5">{sub}</p>}
+        <p className="text-secondary text-xs font-sans">{label}</p>
+        {sub && <p className="text-muted text-[11px] font-sans mt-0.5">{sub}</p>}
       </div>
       <span className={`font-mono text-sm font-semibold shrink-0 ${color || 'text-text'}`}>{value}</span>
     </div>

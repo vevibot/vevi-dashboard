@@ -5,73 +5,78 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Sora carries more personality than Fira Sans without reading as a
-        // gaming font. JetBrains Mono has genuinely good tabular figures, which
-        // matters when columns of prices have to line up.
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
-        sans: ['Sora', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        // Mono is the primary voice here, not a costume: every figure on this
+        // product is a measurement, and tabular numerals stop columns of prices
+        // dancing as digits change. Sans is reserved for prose.
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        sans: ['Archivo', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       colors: {
-        // ── Ground stack ────────────────────────────────────────────────────
-        // Five steps, not two. The old #000 base with a #0A0A0A surface was a 4%
-        // luminance difference, so nothing on the page had depth or a light source.
-        bg:        '#06070A',
-        surface:   '#0B0E13',
-        elevated:  '#11151C',
-        float:     '#171C25',   // NEW — the step that lets cards sit above panels
-        border:    '#1D232E',
-        'border-soft': '#161B23',
+        // Ground. A terminal is read for hours in a dark room — the scene picks
+        // the theme, not the category.
+        bg:        '#05060A',
+        surface:   '#090B10',
+        elevated:  '#0D1016',
+        float:     '#12161D',
 
-        // ── P&L owns green and red, exclusively ─────────────────────────────
-        green:     '#3DDC84',   // semantic positive — P&L / long ONLY
-        red:       '#FB5E6D',   // semantic negative — P&L / short ONLY
+        // Hairlines carry the entire structure in place of cards, so they have to
+        // be genuinely visible rather than a suggestion.
+        border:      '#1B212B',
+        'border-soft': '#12171F',
+        'border-lit':  '#2A323F',
+
+        green:     '#3DDC84',
+        red:       '#FF5C6C',
         warn:      '#F5B93B',
-
-        // ── Brand ───────────────────────────────────────────────────────────
-        // Previously this was #00FF41 — the SAME hex as `green`. Buttons, nav-active,
-        // focus rings and profit all rendered identically, so nothing read as a
-        // signal. Now distinct, and used as glow / hairline / focus rather than as a
-        // large flat fill.
         accent:    '#00F5A0',
-        'accent-dim': '#00C482',
+        'accent-dim': '#00A870',
 
-        muted:     '#5C6675',   // micro-text / secondary labels
-        secondary: '#98A3B3',   // values / mid-emphasis text
-        text:      '#EEF2F7',
+        // 4.5:1 on --bg at body size. Previously #5C6675, which failed.
+        muted:     '#6B7788',
+        secondary: '#98A3B3',
+        text:      '#E8EDF2',
       },
-      borderRadius: {
-        sm: '6px',
-        md: '9px',
-        lg: '12px',
-        xl: '14px',
-      },
+      // A terminal has no rounded boxes. Keeping a token named `lg` avoids
+      // breaking the 14 routes that reference it; it simply resolves to a corner
+      // sharp enough to read as an instrument.
+      borderRadius: { none: '0', sm: '0', md: '0', lg: '2px', xl: '2px', '2xl': '2px', full: '9999px' },
       boxShadow: {
-        sm: '0 1px 2px rgba(0,0,0,0.40)',
-        md: '0 4px 12px rgba(0,0,0,0.50)',
-        lg: '0 20px 46px -26px rgba(0,0,0,0.92)',
-        // Top-edge highlight — a light source from above. This is most of what
-        // separates a considered dark surface from a flat one.
-        rim: '0 1px 0 rgba(255,255,255,.04) inset, 0 20px 46px -26px rgba(0,0,0,.92)',
-        glow: '0 0 26px -6px #00F5A0',
+        // Depth carries an offset and a blur. A zero-offset coloured halo is
+        // decoration, and this world does not use one.
+        sm: '0 1px 2px rgba(0,0,0,.5)',
+        md: '0 6px 16px -8px rgba(0,0,0,.7)',
+        lg: '0 18px 40px -22px rgba(0,0,0,.85)',
+        rim: 'none',
+        glow: 'none',
       },
+      fontSize: {
+        '2xs': ['10px', { lineHeight: '14px', letterSpacing: '.09em' }],
+        xs:    ['11px', { lineHeight: '16px' }],
+        sm:    ['12.5px', { lineHeight: '18px' }],
+        base:  ['14px', { lineHeight: '21px' }],
+        lg:    ['16px', { lineHeight: '22px' }],
+        xl:    ['19px', { lineHeight: '25px', letterSpacing: '-.02em' }],
+        '2xl': ['24px', { lineHeight: '29px', letterSpacing: '-.028em' }],
+        '3xl': ['32px', { lineHeight: '36px', letterSpacing: '-.034em' }],
+        '4xl': ['44px', { lineHeight: '46px', letterSpacing: '-.04em' }],
+      },
+      spacing: { row: '30px', rail: '44px' },
       transitionTimingFunction: {
-        // The built-in easings are too weak to read as deliberate. ease-in is never
-        // used for UI: it delays the first frame, which is exactly when the eye is
-        // on the element.
         out: 'cubic-bezier(.23,1,.32,1)',
         'in-out': 'cubic-bezier(.77,0,.175,1)',
       },
       keyframes: {
-        rise: { from: { opacity: '0', transform: 'translateY(10px)' }, to: { opacity: '1', transform: 'none' } },
-        flashUp: { '0%': { background: 'rgba(61,220,132,.24)' }, '100%': { background: 'transparent' } },
-        flashDown: { '0%': { background: 'rgba(251,94,109,.24)' }, '100%': { background: 'transparent' } },
-        breathe: { '0%,100%': { opacity: '1' }, '50%': { opacity: '.35' } },
+        // THE authored moment: a value that changed announces itself, then gets
+        // out of the way. It is information, not decoration — which is why it is
+        // the one animation that survives prefers-reduced-motion.
+        markUp:   { '0%': { background: 'rgba(61,220,132,.26)' }, '100%': { background: 'transparent' } },
+        markDown: { '0%': { background: 'rgba(255,92,108,.26)' }, '100%': { background: 'transparent' } },
+        scanline: { '0%': { transform: 'scaleX(0)' }, '100%': { transform: 'scaleX(1)' } },
       },
       animation: {
-        rise: 'rise .42s cubic-bezier(.23,1,.32,1) both',
-        'flash-up': 'flashUp .75s cubic-bezier(.23,1,.32,1)',
-        'flash-down': 'flashDown .75s cubic-bezier(.23,1,.32,1)',
-        breathe: 'breathe 2.4s ease-in-out infinite',
+        'mark-up': 'markUp .9s cubic-bezier(.23,1,.32,1)',
+        'mark-down': 'markDown .9s cubic-bezier(.23,1,.32,1)',
+        scanline: 'scanline .5s cubic-bezier(.23,1,.32,1) both',
       },
     },
   },

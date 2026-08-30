@@ -122,8 +122,8 @@ export function Sidebar({ role }: Props) {
             <span className={cn('text-[9px] font-mono font-bold tracking-wider', statusMeta.color)}>{statusMeta.label}</span>
           </span>
         </div>
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green/20 to-green/5 border border-green/30 flex items-center justify-center">
-          <span className="text-[11px] font-mono font-bold text-green">{initial}</span>
+        <div className="w-7 h-7 border border-accent/35 flex items-center justify-center">
+          <span className="text-[11px] font-mono font-bold text-accent">{initial}</span>
         </div>
       </div>
 
@@ -163,7 +163,7 @@ export function Sidebar({ role }: Props) {
       </aside>
 
       {/* ── DESKTOP SIDEBAR — md and up ─────────────────────────────────────── */}
-      <aside className="hidden md:flex md:w-60 shrink-0 bg-surface border-r border-border flex-col min-h-screen sticky top-0">
+      <aside className="hidden md:flex md:w-[212px] shrink-0 bg-surface border-r border-border flex-col min-h-screen sticky top-0">
         <SidebarBody
           role={role}
           nav={nav}
@@ -217,12 +217,12 @@ function SidebarBody({
             )}
           </div>
         </div>
-        <p className="text-[11px] text-muted font-sans tracking-wide mb-4">Algorithmic Edge</p>
+        <p className="lbl mb-4">Algorithmic Edge</p>
 
         {/* User identity */}
-        <div className="bg-elevated border border-border/60 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green/20 to-green/5 border border-green/30 flex items-center justify-center shrink-0">
-            <span className="text-[12px] font-mono font-bold text-green">{initial}</span>
+        <div className="border border-border px-3 py-2.5 flex items-center gap-2.5">
+          <div className="w-6 h-6 border border-accent/35 flex items-center justify-center shrink-0">
+            <span className="text-[11px] font-mono font-bold text-accent">{initial}</span>
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] text-text font-sans truncate leading-tight" title={email || 'signed in'}>
@@ -236,7 +236,7 @@ function SidebarBody({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
+      <nav className="flex-1 py-2 flex flex-col overflow-y-auto">
         {nav.map((item) => {
           const active = pathname === item.href;
           return (
@@ -245,10 +245,11 @@ function SidebarBody({
               href={item.href}
               onClick={onItemClick}
               className={cn(
-                'flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-lg text-sm font-sans transition-colors duration-150 cursor-pointer',
+                'relative flex items-center gap-3 pl-4 pr-3 py-2.5 text-sm transition-colors duration-150 cursor-pointer',
+                'before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:transition-colors before:duration-150',
                 active
-                  ? 'bg-accent/10 text-accent border border-accent/20'
-                  : 'text-muted hover:bg-elevated hover:text-text border border-transparent active:bg-elevated',
+                  ? 'text-text bg-white/[.035] before:bg-accent'
+                  : 'text-muted before:bg-transparent hover:text-text hover:bg-white/[.02] active:bg-white/[.05]',
               )}
             >
               {item.icon}
@@ -259,10 +260,10 @@ function SidebarBody({
       </nav>
 
       {/* Logout */}
-      <div className="px-3 py-4 border-t border-border">
+      <div className="py-2 border-t border-border">
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-lg text-sm font-sans text-muted hover:bg-elevated hover:text-red active:bg-elevated transition-colors duration-150 cursor-pointer w-full"
+          className="flex items-center gap-3 pl-4 pr-3 py-2.5 text-sm text-muted hover:bg-white/[.02] hover:text-red active:bg-white/[.05] transition-colors duration-150 cursor-pointer w-full"
         >
           <LogOut size={16} />
           Logout

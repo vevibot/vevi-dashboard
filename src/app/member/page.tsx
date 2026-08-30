@@ -28,20 +28,23 @@ export default function MemberDashboard() {
   }, [data?.account_id]);
 
   if (error) return (
-    <div className="p-8 flex items-center justify-center h-64">
-      <p className="text-red font-sans">{error}</p>
+    <div className="px-6 py-16 text-center">
+      <p className="lbl text-red">Connection failed</p>
+      <p className="text-secondary text-sm mt-2 max-w-[60ch] mx-auto">{error}</p>
     </div>
   );
 
   if (!data) return (
-    <div className="p-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 bg-surface rounded-lg" />
-        <div className="grid grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-24 bg-surface rounded-xl" />)}
-        </div>
-        <div className="h-56 bg-surface rounded-xl" />
+    <div className="animate-pulse">
+      <div className="grid grid-cols-2 md:grid-cols-4 border-b border-border">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="px-4 py-3 border-r border-border">
+            <div className="h-2.5 w-16 bg-border" />
+            <div className="h-5 w-24 bg-border mt-2.5" />
+          </div>
+        ))}
       </div>
+      <div className="h-64 border-b border-border" />
     </div>
   );
 
@@ -50,102 +53,110 @@ export default function MemberDashboard() {
   const totalPnl      = closedTrades.reduce((s, t) => s + (t.pnl ?? 0), 0);
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="font-sans font-semibold text-2xl text-text">Dashboard</h1>
-        <p className="text-muted text-sm font-sans mt-1">
-          {data.name} &mdash;{' '}
-          <span className={`font-mono ${data.is_active ? 'text-green' : 'text-muted'}`}>
-            {data.is_active ? '● Active' : '○ Paused'}
-          </span>
-        </p>
+    <div>
+      {/* ── Status rail. One continuous line of figures divided by hairlines,
+             the way a terminal presents state — not four boxes in a grid. ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 border-b border-border">
+        <div className="border-r border-border">
+          <MetricCard
+            label="Equity"
+            value={data.balance > 0 ? data.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
+            icon={<Wallet />}
+            sub="USDT · BingX"
+          />
+        </div>
+        <div className="md:border-r md:border-border">
+          <MetricCard
+            label="Daily P&L" value={fmtPnl(data.daily_pnl)}
+            positive={pnlPositive}
+            sub={`${data.daily_trades} trade${data.daily_trades !== 1 ? 's' : ''} today`}
+            icon={<TrendingUp />}
+          />
+        </div>
+        <div className="border-r border-t border-border md:border-t-0">
+          <MetricCard
+            label="Open" value={String(data.open_count)}
+            icon={<Layers />}
+            sub="positions"
+          />
+        </div>
+        <div className="border-t border-border md:border-t-0">
+          <MetricCard
+            label="Total P&L" value={fmtPnl(totalPnl)}
+            positive={totalPnl >= 0}
+            icon={<Calendar />}
+            sub={`${closedTrades.length} closed`}
+          />
+        </div>
       </div>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <MetricCard
-          label="Balance" value={data.balance > 0 ? `$${data.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
-          icon={<Wallet size={16} />}
-          sub="USDT equity"
-        />
-        <MetricCard
-          label="Daily P&L" value={fmtPnl(data.daily_pnl)}
-          positive={pnlPositive}
-          sub={`${data.daily_trades} trade${data.daily_trades !== 1 ? 's' : ''} today`}
-          icon={<TrendingUp size={16} />}
-        />
-        <MetricCard
-          label="Open Positions" value={String(data.open_count)}
-          icon={<Layers size={16} />}
-          sub="Currently running"
-        />
-        <MetricCard
-          label="Total P&L" value={fmtPnl(totalPnl)}
-          positive={totalPnl >= 0}
-          icon={<Calendar size={16} />}
-          sub={`${closedTrades.length} closed trades`}
-        />
+      {/* ── Account line ── */}
+      <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-border flex-wrap">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${data.is_active ? 'bg-green animate-pulse-slow' : 'bg-muted'}`}
+            aria-hidden
+          />
+          <span className="font-mono text-sm text-text truncate">{data.name}</span>
+          <span className="lbl">{data.is_active ? 'Active' : 'Paused'}</span>
+        </div>
+        <span className="lbl">Automated execution paused · manual broadcast only</span>
       </div>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-        {/* Equity curve — takes 2/3 width */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-muted text-xs font-sans uppercase tracking-wide">Equity Curve</p>
-              <p className={`font-mono font-semibold text-lg mt-0.5 ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
-                {fmtPnl(totalPnl)}
-              </p>
-            </div>
-            <span className="text-xs text-muted font-sans">{closedTrades.length} trades</span>
+      {/* ── Charts. Divided regions, never boxed. ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 border-b border-border">
+        <div className="lg:col-span-2 lg:border-r lg:border-border px-4 py-4">
+          <div className="flex items-baseline justify-between mb-3">
+            <span className="lbl">Equity curve</span>
+            <span className={`num text-lg font-semibold ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
+              {fmtPnl(totalPnl)}
+            </span>
           </div>
           <EquityChart trades={trades} />
         </div>
-
-        {/* Daily P&L bars — 1/3 width */}
-        <div className="bg-surface border border-border rounded-xl p-5">
-          <div className="mb-4">
-            <p className="text-muted text-xs font-sans uppercase tracking-wide">Daily P&L</p>
-            <p className={`font-mono font-semibold text-lg mt-0.5 ${pnlPositive ? 'text-green' : 'text-red'}`}>
+        <div className="px-4 py-4 border-t border-border lg:border-t-0">
+          <div className="flex items-baseline justify-between mb-3">
+            <span className="lbl">Daily P&amp;L</span>
+            <span className={`num text-lg font-semibold ${pnlPositive ? 'text-green' : 'text-red'}`}>
               {fmtPnl(data.daily_pnl)}
-            </p>
+            </span>
           </div>
           <DailyPnlBars trades={trades} />
         </div>
       </div>
 
-      {/* Open positions */}
-      <div>
-        <h2 className="font-sans font-medium text-text mb-4">
-          Open Positions
-          <span className="ml-2 font-mono text-sm text-muted">({data.open_count})</span>
-        </h2>
+      {/* ── Open positions ── */}
+      <div className="border-b border-border">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+          <span className="lbl">Open positions</span>
+          <span className="num text-xs text-muted">{data.open_count}</span>
+        </div>
 
         {data.open_positions.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {data.open_positions.map((pos) => (
-              <PositionCard key={pos.symbol} position={pos} />
+              <div key={pos.symbol} className="border-r border-b border-border">
+                <PositionCard position={pos} />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="bg-surface border border-border rounded-xl p-12 text-center">
-            <Layers size={32} className="text-muted mx-auto mb-3" />
-            <p className="text-muted font-sans text-sm">No open positions — bot is scanning for setups</p>
+          <div className="px-4 py-10 text-center">
+            <p className="text-secondary text-sm">No open positions.</p>
+            <p className="text-muted text-xs mt-1">
+              Automated execution is paused during the rebuild — trades arrive by manual broadcast.
+            </p>
           </div>
         )}
       </div>
 
-      {/* Trading data panel */}
-      <div className="mt-8">
-        <TradingDataPanel
-          accountId={data.account_id}
-          exchange="bingx"
-          openPositions={data.open_positions}
-          canTrade={false}
-          onRefresh={() => getMyDashboard().then(setData)}
-        />
-      </div>
+      <TradingDataPanel
+        accountId={data.account_id}
+        exchange="bingx"
+        openPositions={data.open_positions}
+        canTrade={false}
+        onRefresh={() => getMyDashboard().then(setData)}
+      />
     </div>
   );
 }

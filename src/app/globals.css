@@ -1,96 +1,116 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Ground stack — five steps. The previous #000 base over a #0A0A0A surface was a
-     4% luminance difference, so no element had depth or a light source. */
-  --bg:          #06070A;
-  --surface:     #0B0E13;
-  --elevated:    #11151C;
-  --float:       #171C25;
-  --border:      #1D232E;
-  --border-soft: #161B23;
+  --bg:          #05060A;
+  --surface:     #090B10;
+  --elevated:    #0D1016;
+  --float:       #12161D;
+  --border:      #1B212B;
+  --border-soft: #12171F;
+  --border-lit:  #2A323F;
 
-  /* P&L owns green and red, exclusively. */
-  --green:     #3DDC84;
-  --red:       #FB5E6D;
-  --warn:      #F5B93B;
+  --green:  #3DDC84;
+  --red:    #FF5C6C;
+  --warn:   #F5B93B;
+  --accent: #00F5A0;
 
-  /* Brand. Previously identical to --green (#00FF41), which meant buttons,
-     nav-active, focus rings and profit all shouted in the same colour. */
-  --accent:     #00F5A0;
-  --accent-dim: #00C482;
-
-  --muted:     #5C6675;
+  --muted:     #6B7788;
   --secondary: #98A3B3;
-  --text:      #EEF2F7;
+  --text:      #E8EDF2;
 
   --ease-out: cubic-bezier(.23, 1, .32, 1);
 }
 
 * { box-sizing: border-box; }
 
+html { background: var(--bg); }
+
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
-  position: relative;
-  /* Two ambient blooms. Fixed attachment so they sit behind content and do not
-     scroll — cheap depth that stops the page reading as flat CSS. */
-  background-image:
-    radial-gradient(900px 520px at 10% -10%, rgba(0, 245, 160, .05), transparent 62%),
-    radial-gradient(760px 440px at 94% 2%, rgba(0, 150, 255, .035), transparent 60%);
-  background-attachment: fixed;
+  font-feature-settings: 'tnum' 1, 'cv05' 1;
 }
 
-/* Film grain. The single cheapest thing that stops a dark UI looking synthetic. */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: .028;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+/* Every figure in this product is a measurement. */
+.font-mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
+.num { font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+/* ── Browser surfaces ──────────────────────────────────────────────────────
+   The parts nobody draws still carry the design. Left at defaults, these are
+   the cheapest tell that a page was assembled rather than built. */
+::selection { background: rgba(0, 245, 160, .22); color: #FFFFFF; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border: 3px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-lit); }
+::-webkit-scrollbar-corner { background: var(--bg); }
+* { scrollbar-color: var(--border) var(--bg); scrollbar-width: thin; }
+
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
 }
 
-.font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+input, textarea, select { caret-color: var(--accent); accent-color: var(--accent); }
 
-/* Tabular figures for every numeric / financial readout, so price columns line up. */
-.num { font-variant-numeric: tabular-nums; }
-
-/* Selection uses BRAND, never green — green means profit and nothing else. */
-::selection { background: rgba(0, 245, 160, .26); color: #FFFFFF; }
-
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: #2A313D; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #38414F; }
-
-/* Panels get a top-edge highlight: a light source from above. */
-.rim { box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 20px 46px -26px rgba(0,0,0,.92); }
-.rim-accent { position: relative; }
-.rim-accent::before {
-  content: '';
-  position: absolute; top: 0; left: 12%; right: 12%; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,245,160,.5), transparent);
+/* Autofill in Chrome repaints the field white and undoes the whole surface. */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px var(--elevated) inset;
+  caret-color: var(--accent);
 }
 
-/* Pressables must feel like they heard you. */
-.pressable { transition: transform 160ms var(--ease-out); }
-.pressable:active { transform: scale(.97); }
+/* ── Terminal structure ────────────────────────────────────────────────────
+   Hairlines replace cards. Regions are divided, never boxed.
 
-@keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+   These live in @layer utilities so Tailwind generates responsive variants for
+   them — a plain CSS class gets no `md:` prefix, and the grid needs to drop the
+   vertical rule and pick up a horizontal one when columns stack. */
+@layer utilities {
+  .rule-t { border-top: 1px solid var(--border); }
+  .rule-b { border-bottom: 1px solid var(--border); }
+  .rule-r { border-right: 1px solid var(--border); }
+  .rule-l { border-left: 1px solid var(--border); }
+  .rule-t-0 { border-top: 0; }
+  .rule-r-0 { border-right: 0; }
+  .rule-b-0 { border-bottom: 0; }
+
+  /* Column headers and micro-labels: the terminal's smallest voice. */
+  .lbl {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    line-height: 14px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+}
+
+/* A value that just changed announces itself, then gets out of the way. */
+.mark-up   { animation: markUp .9s var(--ease-out); }
+.mark-down { animation: markDown .9s var(--ease-out); }
+@keyframes markUp   { 0% { background: rgba(61,220,132,.26); } 100% { background: transparent; } }
+@keyframes markDown { 0% { background: rgba(255,92,108,.26); } 100% { background: transparent; } }
+
+.pressable { transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
+.pressable:active { background-color: rgba(255,255,255,.05); }
+
+@keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 .animate-pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
 
-/* Reduced motion means fewer and gentler, not zero: opacity and colour still carry
-   meaning (a P&L flash is information), positional movement is what goes. */
+/* Reduced motion keeps the mark — it is information, not decoration — and drops
+   everything positional. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-rise, .animate-breathe, .animate-pulse-slow { animation: none; }
-  .pressable:active { transform: none; }
-  *, *::before, *::after { transition-duration: 120ms !important; }
+  .animate-pulse-slow, .animate-scanline { animation: none; }
+  .mark-up, .mark-down { animation-duration: .4s; }
+  *, *::before, *::after { transition-duration: 100ms !important; }
 }

@@ -139,7 +139,7 @@ export function BroadcastModal({ onClose }: Props) {
 
               <button
                 onClick={submit} disabled={loading}
-                className="w-full py-2.5 rounded-xl font-mono font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 bg-green/15 text-green border border-green/40 hover:bg-green/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded-lg font-mono font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 bg-green/15 text-green border border-green/40 hover:bg-green/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? <><Loader2 size={14} className="animate-spin" /> Broadcasting…</> : <><Radio size={14} /> Broadcast to All Accounts</>}
               </button>
@@ -168,7 +168,7 @@ export function BroadcastModal({ onClose }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="w-full mt-2 py-2 rounded-xl font-mono font-semibold text-sm bg-elevated text-muted border border-border hover:text-text transition-colors cursor-pointer"
+                className="w-full mt-2 py-2 rounded-lg font-mono font-semibold text-sm bg-elevated text-muted border border-border hover:text-text transition-colors cursor-pointer"
               >
                 Close
               </button>

@@ -48,7 +48,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Smart Exit banner — the headline change */}
-      <div className="bg-gradient-to-br from-green/10 to-green/0 border border-green/30 rounded-xl p-5 mb-4">
+      <div className="bg-gradient-to-br from-green/10 to-green/0 border border-green/30  p-5 mb-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] text-green font-mono font-bold tracking-wider mb-1">
@@ -152,7 +152,7 @@ export default function SettingsPage() {
 
 function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface border border-border rounded-xl p-5">
+    <div className="bg-surface border border-border lit p-5">
       <div className="flex items-center gap-2 mb-4">
         <span className="text-green">{icon}</span>
         <h3 className="text-text font-sans font-semibold text-sm uppercase tracking-wider">{title}</h3>

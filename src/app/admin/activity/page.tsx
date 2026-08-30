@@ -98,7 +98,7 @@ export default function ActivityPage() {
         <div className="h-8 w-40 bg-surface rounded-lg animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-56 bg-surface rounded-xl animate-pulse" />
+            <div key={i} className="h-56 bg-surface  animate-pulse" />
           ))}
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function ActivityPage() {
 
       {/* ── Symbol grid ────────────────────────────────────────────────────── */}
       {symbolsForAccount.length === 0 ? (
-        <div className="bg-surface border border-border rounded-xl p-12 text-center">
+        <div className="bg-surface border border-border lit p-12 text-center">
           <ActivityIcon size={32} className="text-muted/40 mx-auto mb-3" />
           <p className="text-muted text-sm">
             {currentAccount?.is_active

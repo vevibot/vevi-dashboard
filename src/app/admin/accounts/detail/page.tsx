@@ -75,9 +75,9 @@ function AccountDetailPage() {
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-64 bg-surface rounded-lg" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-20 bg-surface rounded-xl" />)}
+            {[...Array(4)].map((_, i) => <div key={i} className="h-20 bg-surface " />)}
           </div>
-          <div className="h-64 bg-surface rounded-xl" />
+          <div className="h-64 bg-surface " />
         </div>
       </div>
     );
@@ -164,7 +164,7 @@ function AccountDetailPage() {
       <ExchangePnlPanel accountId={id} days={7} />
 
       {/* Trading Data Panel — open positions, orders, history, etc. */}
-      <div className="bg-surface border border-border rounded-xl p-4 mb-6">
+      <div className="bg-surface border border-border lit p-4 mb-6">
         <TradingDataPanel
           accountId={id}
           exchange={account?.exchange ?? 'bingx'}
@@ -175,7 +175,7 @@ function AccountDetailPage() {
       </div>
 
       {/* Recent Trades (Vevi internal — for cross-reference) */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border lit overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border bg-elevated/40">
           <div className="flex items-center gap-2">
             <Briefcase size={14} className="text-muted" />
@@ -234,7 +234,7 @@ function AccountDetailPage() {
 
 function Card({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-1.5">
+    <div className="bg-surface border border-border lit p-4 flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
         <span className="text-muted text-xs font-sans uppercase tracking-wide">{label}</span>
         <span className="text-muted">{icon}</span>

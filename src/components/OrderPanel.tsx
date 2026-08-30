@@ -62,7 +62,7 @@ export function OrderPanel({ accountId, symbol, exchange, onDone }: Props) {
   }
 
   return (
-    <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-4">
+    <div className="bg-surface border border-border rounded-lg p-4 flex flex-col gap-4">
       {/* Symbol header */}
       <div className="flex items-center justify-between">
         <span className="font-mono font-semibold text-text">{clean}</span>

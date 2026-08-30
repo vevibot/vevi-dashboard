@@ -81,7 +81,7 @@ function BroadcastPanel() {
   const inputCls = 'bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm font-mono text-text focus:outline-none focus:border-accent/60';
 
   return (
-    <div className="bg-surface border border-border rounded-xl mb-6 overflow-hidden">
+    <div className="bg-surface border border-border lit mb-6 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-elevated/40">
         <div className="w-2 h-2 rounded-full bg-green animate-pulse-slow" />
@@ -404,7 +404,7 @@ function AccountsCell({ group, symbol, onRefresh }: {
           {/* dropdown — fixed so table overflow-x-auto can't clip it */}
           <div
             style={{ top: dropPos.top, left: dropPos.left }}
-            className="fixed z-50 bg-surface border border-border rounded-xl shadow-2xl w-60 overflow-hidden"
+            className="fixed z-50 bg-surface border border-border lit shadow-2xl w-60 overflow-hidden"
           >
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-elevated/40">
               <p className="text-[11px] text-muted font-sans uppercase tracking-wide">
@@ -502,7 +502,7 @@ function CloseCell({ group, symbol, onRefresh }: {
 function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: () => void }) {
   if (positions.length === 0) {
     return (
-      <div className="bg-surface border border-border rounded-xl p-12 text-center">
+      <div className="bg-surface border border-border lit p-12 text-center">
         <Briefcase size={28} className="text-muted mx-auto mb-2" />
         <p className="text-muted text-sm font-sans">No open positions across any account.</p>
       </div>
@@ -516,7 +516,7 @@ function LiveTab({ positions, onRefresh }: { positions: LivePos[]; onRefresh: ()
   }
 
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-x-auto">
+    <div className="bg-surface border border-border lit overflow-x-auto">
       <table className="w-full text-sm font-sans min-w-[800px]">
         <thead>
           <tr className="border-b border-border">
@@ -636,7 +636,7 @@ function HistoryTab({ trades, allTrades, accounts }: {
       {/* Exchange-side truth (BingX) — only shown when an account is selected */}
       {selectedAcc === 'all' ? (
         accounts.length > 0 && (
-          <div className="bg-surface border border-warn/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <div className="bg-surface border border-warn/30  p-4 mb-6 flex items-start gap-3">
             <Shield size={16} className="text-warn mt-0.5 shrink-0" />
             <div>
               <p className="text-text text-sm font-sans font-medium">
@@ -654,7 +654,7 @@ function HistoryTab({ trades, allTrades, accounts }: {
 
       {/* Account picker + summary card */}
       {allTrades.length > 0 && (
-        <div className="bg-surface border border-border rounded-xl p-5 mb-6">
+        <div className="bg-surface border border-border lit p-5 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-muted text-[11px] font-sans uppercase tracking-wide">Filter:</span>
@@ -720,7 +720,7 @@ function HistoryTab({ trades, allTrades, accounts }: {
         count={filteredClosed.length}
       />
 
-      <div className="bg-surface border border-border rounded-xl overflow-x-auto">
+      <div className="bg-surface border border-border lit overflow-x-auto">
         <table className="w-full text-sm font-sans min-w-[800px]">
           <thead>
             <tr className="border-b border-border">

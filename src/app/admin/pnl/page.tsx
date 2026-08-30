@@ -24,7 +24,7 @@ export default function PnlCalendarPage() {
     <div className="p-4 md:p-8">
       <div className="animate-pulse space-y-4">
         <div className="h-8 w-40 bg-surface rounded-lg" />
-        <div className="h-96 bg-surface rounded-xl" />
+        <div className="h-96 bg-surface " />
       </div>
     </div>
   );
@@ -44,17 +44,17 @@ export default function PnlCalendarPage() {
 
       {/* Summary row */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-surface border border-border rounded-xl p-4">
+        <div className="bg-surface border border-border lit p-4">
           <p className="text-muted text-xs font-sans uppercase tracking-wide mb-1">Total P&L</p>
           <p className={`font-mono font-semibold text-xl ${totalPnl >= 0 ? 'text-green' : 'text-red'}`}>
             {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
           </p>
         </div>
-        <div className="bg-surface border border-border rounded-xl p-4">
+        <div className="bg-surface border border-border lit p-4">
           <p className="text-muted text-xs font-sans uppercase tracking-wide mb-1">Closed Trades</p>
           <p className="font-mono font-semibold text-xl text-text">{closed.length}</p>
         </div>
-        <div className="bg-surface border border-border rounded-xl p-4">
+        <div className="bg-surface border border-border lit p-4">
           <p className="text-muted text-xs font-sans uppercase tracking-wide mb-1">Win Rate</p>
           <p className="font-mono font-semibold text-xl text-text">{wr}%</p>
         </div>
@@ -62,13 +62,13 @@ export default function PnlCalendarPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Calendar — takes 3 cols */}
-        <div className="lg:col-span-3 bg-surface border border-border rounded-xl p-5">
+        <div className="lg:col-span-3 bg-surface border border-border lit p-5">
           <p className="text-muted text-xs font-sans uppercase tracking-wide mb-4">Monthly View</p>
           <DailyPnlCalendar trades={trades} />
         </div>
 
         {/* Bar chart — takes 2 cols */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5">
+        <div className="lg:col-span-2 bg-surface border border-border lit p-5">
           <p className="text-muted text-xs font-sans uppercase tracking-wide mb-4">Last 14 Days</p>
           <DailyPnlBars trades={trades} />
 

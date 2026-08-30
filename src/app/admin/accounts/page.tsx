@@ -102,7 +102,7 @@ export default function AccountsPage() {
             <div
               key={acc.id}
               onClick={() => openDetail(acc.id)}
-              className="bg-surface border border-border rounded-xl p-4 active:bg-elevated/50 transition-colors cursor-pointer"
+              className="bg-surface border border-border lit p-4 active:bg-elevated/50 transition-colors cursor-pointer"
             >
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0 flex-1">
@@ -157,14 +157,14 @@ export default function AccountsPage() {
           );
         })}
         {accounts.length === 0 && (
-          <div className="bg-surface border border-border rounded-xl px-5 py-12 text-center text-muted text-sm">
+          <div className="bg-surface border border-border lit px-5 py-12 text-center text-muted text-sm">
             No accounts yet. Tap &ldquo;Add Account&rdquo; to start.
           </div>
         )}
       </div>
 
       {/* ── Desktop: table (≥md) ─────────────────────────────────────────── */}
-      <div className="hidden md:block bg-surface border border-border rounded-xl overflow-x-auto">
+      <div className="hidden md:block bg-surface border border-border lit overflow-x-auto">
         <table className="w-full text-sm font-sans">
           <thead>
             <tr className="border-b border-border">

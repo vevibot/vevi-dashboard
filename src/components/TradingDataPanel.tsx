@@ -105,7 +105,7 @@ export function TradingDataPanel({ accountId, exchange, openPositions, canTrade,
     : rows;
 
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden">
+    <div className="bg-surface border border-border lit overflow-hidden">
       {/* Header row: tabs + symbol filter + controls */}
       <div className="border-b border-border">
         {/* Tab row */}
@@ -232,7 +232,7 @@ export function TradingDataPanel({ accountId, exchange, openPositions, canTrade,
       {/* Confirm close all */}
       {confirmClose && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-xl p-6 w-80 shadow-2xl">
+          <div className="bg-surface border border-border lit p-6 w-80 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle size={20} className="text-red shrink-0" />
               <h3 className="font-sans font-semibold text-text">Close All Positions?</h3>

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/lib/api';
-import Image from 'next/image';
+import { VeviMark } from '@/components/VeviMark';
 import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -34,17 +34,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* The banner IS the card's header — full-bleed to the card edges, so it
-            reads as one surface rather than a logo floating above a box. The same
-            asset and composition members see at the top of Vevi email. */}
+            reads as one surface rather than a logo floating above a box. Built,
+            not screenshotted: crisp at any density, themeable, and it can move. */}
         <div className="bg-surface border border-border rounded-lg overflow-hidden shadow-lg">
-          <Image
-            src="/vevi-header.png"
-            alt="Vevi — Algorithmic Trading System"
-            width={1200}
-            height={450}
-            priority
-            className="block w-full h-auto"
-          />
+          <VeviMark />
 
           <div className="p-7">
           <h1 className="text-text font-sans font-semibold text-xl mb-1">Sign in</h1>

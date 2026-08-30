@@ -44,7 +44,7 @@ body {
 /* ── Browser surfaces ──────────────────────────────────────────────────────
    The parts nobody draws still carry the design. Left at defaults, these are
    the cheapest tell that a page was assembled rather than built. */
-::selection { background: rgba(0, 245, 160, .22); color: #FFFFFF; }
+::selection { background: rgba(62, 207, 142, .22); color: #FFFFFF; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -100,6 +100,34 @@ input:-webkit-autofill:focus {
 .mark-down { animation: markDown .9s var(--ease-out); }
 @keyframes markUp   { 0% { background: rgba(62,207,142,.24); } 100% { background: transparent; } }
 @keyframes markDown { 0% { background: rgba(248,83,107,.24); } 100% { background: transparent; } }
+
+/* ── The sunrise ───────────────────────────────────────────────────────────
+   A green light rises from behind the mark on arrival, the way a sun crests a
+   horizon. It runs once and it is the only thing on the sign-in screen that
+   moves: a page animating in six places feels cheap, a page that resolves in one
+   gesture feels made.
+
+   Transform and opacity only, so it composites on the GPU and cannot stutter while
+   the auth request is in flight. Exponential ease-out from a position that is
+   already partly visible — nothing in the world arrives from nothing. */
+@keyframes sunrise {
+  0%   { transform: translate(-50%, 78px) scale(.55); opacity: 0; }
+  55%  { opacity: 1; }
+  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+}
+.sunrise {
+  transform: translate(-50%, 0);
+  animation: sunrise 2s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+/* The mark and the tagline follow the light rather than arriving with it, so the
+   sequence reads as one gesture with an order to it. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(9px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+.rise   { animation: rise .85s cubic-bezier(.16, 1, .3, 1) .28s both; }
+.rise-2 { animation-delay: .46s; }
 
 /* ── Surfaces that catch light ─────────────────────────────────────────────
    A 1px highlight along the top edge. The single cheapest thing that makes a
@@ -157,6 +185,10 @@ input:-webkit-autofill:focus {
    everything positional. */
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse-slow { animation: none; }
+  /* The light still arrives — it just never travels. Painting the end state keeps
+     the composition intact rather than removing an element of the design. */
+  .sunrise { animation: none; transform: translate(-50%, 0); opacity: 1; }
+  .rise    { animation: none; opacity: 1; transform: none; }
   .mark-up, .mark-down { animation-duration: .4s; }
   .spot::after { display: none; }
   *, *::before, *::after { transition-duration: 100ms !important; }

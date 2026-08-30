@@ -217,7 +217,7 @@ function SidebarBody({
             )}
           </div>
         </div>
-        <p className="lbl mb-4">Algorithmic Edge</p>
+        <p className="lbl mb-4">Algorithmic Trading System</p>
 
         {/* User identity */}
         <div className="border border-border px-3 py-2.5 flex items-center gap-2.5">

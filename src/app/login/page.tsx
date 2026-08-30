@@ -33,12 +33,20 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center mb-8">
-          <Image src="/vevi-logo.svg" alt="Vevi" width={130} height={34} priority />
-        </div>
+        {/* The banner IS the card's header — full-bleed to the card edges, so it
+            reads as one surface rather than a logo floating above a box. The same
+            asset and composition members see at the top of Vevi email. */}
+        <div className="bg-surface border border-border rounded-lg overflow-hidden shadow-lg">
+          <Image
+            src="/vevi-header.png"
+            alt="Vevi — Algorithmic Trading System"
+            width={1200}
+            height={450}
+            priority
+            className="block w-full h-auto"
+          />
 
-        <div className="bg-surface border border-border rounded-2xl p-8">
+          <div className="p-7">
           <h1 className="text-text font-sans font-semibold text-xl mb-1">Sign in</h1>
           <p className="text-muted text-sm font-sans mb-6">Access your trading dashboard</p>
 
@@ -76,10 +84,11 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
+          </div>
         </div>
 
-        <p className="text-center text-muted text-xs font-sans mt-6">
-          Vevi Trading Bot &mdash; Observatory
+        <p className="text-center text-muted text-xs font-sans mt-5">
+          Your keys stay encrypted at rest &middot; funds never leave your exchange
         </p>
       </div>
     </div>

@@ -45,7 +45,12 @@ export function PositionCard({ position: p, accountId, onTrade, onClosed }: Prop
     <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3 hover:border-accent/40 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => router.push('/admin/trades')}
+          onClick={() => {
+            // Route by role: this card renders on BOTH dashboards, and sending a
+            // member to /admin/trades bounces them to /login via the admin guard.
+            const role = typeof window !== 'undefined' ? localStorage.getItem('vevi_role') : null;
+            router.push(role === 'admin' ? '/admin/trades' : '/member/trades');
+          }}
           className="flex items-center gap-1 font-mono font-semibold text-text hover:text-green transition-colors cursor-pointer group"
           title="View in Trades"
         >

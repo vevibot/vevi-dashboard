@@ -91,17 +91,35 @@ export default function MemberDashboard() {
         </div>
       </Spotlight>
 
-      {/* ── Account line ── */}
-      <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-border flex-wrap">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${data.is_active ? 'bg-green animate-pulse-slow' : 'bg-muted'}`}
-            aria-hidden
-          />
-          <span className="font-mono text-sm text-text truncate">{data.name}</span>
-          <span className="lbl">{data.is_active ? 'Active' : 'Paused'}</span>
+      {/* ── Account line. The terminal's own horizon: the same 1px accent rule and
+             the same light the sign-in screen and the sidebar open with, so the
+             three surfaces read as one product. Muted here — a working screen
+             should not compete with its own header. ── */}
+      <div className="relative overflow-hidden border-b border-border">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-full"
+          style={{
+            width: 620, height: 300, top: '-160%',
+            background: 'radial-gradient(circle, rgba(62,207,142,.11), transparent 68%)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: 'linear-gradient(90deg,transparent,rgba(62,207,142,.55) 30%,rgba(62,207,142,.55) 70%,transparent)' }}
+        />
+        <div className="relative flex items-center justify-between gap-4 px-4 py-2.5 flex-wrap">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${data.is_active ? 'bg-green animate-pulse-slow' : 'bg-muted'}`}
+              aria-hidden
+            />
+            <span className="font-mono text-sm text-text truncate">{data.name}</span>
+            <span className="lbl">{data.is_active ? 'Active' : 'Paused'}</span>
+          </div>
+          <span className="lbl">Automated execution paused · manual broadcast only</span>
         </div>
-        <span className="lbl">Automated execution paused · manual broadcast only</span>
       </div>
 
       {/* ── Charts. Divided regions, never boxed. ── */}

@@ -9,7 +9,7 @@ import {
   TrendingUp, ListOrdered, BarChart2, Activity, Briefcase, CalendarDays,
   Menu, X,
 } from 'lucide-react';
-import Image from 'next/image';
+import { VeviWordmark } from '@/components/VeviMark';
 
 interface NavItem { href: string; label: string; icon: React.ReactNode; }
 
@@ -116,7 +116,14 @@ export function Sidebar({ role }: Props) {
           <Menu size={20} />
         </button>
         <div className="flex items-center gap-2">
-          <Image src="/vevi-logo.svg" alt="Vevi" width={72} height={20} priority />
+          {/* The badge, small. The mobile bar has no room for the horizon, but the
+              mark has to be the same object it is everywhere else. */}
+          <span
+            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 shadow-[0_0_0_1px_rgba(62,207,142,.28)]"
+            style={{ background: 'radial-gradient(circle at 38% 30%, #46A375, #2C6B4C 72%)' }}
+          >
+            <VeviWordmark className="w-3 h-auto" />
+          </span>
           <span className="flex items-center gap-1" title={`Backend connection: ${statusMeta.label}`}>
             <span className={cn('w-1.5 h-1.5 rounded-full', statusMeta.dot, statusMeta.ping && 'animate-pulse-slow')} />
             <span className={cn('text-[9px] font-mono font-bold tracking-wider', statusMeta.color)}>{statusMeta.label}</span>
@@ -195,32 +202,60 @@ function SidebarBody({
   const meta = STATUS_META[status];
   return (
     <>
-      {/* Brand */}
-      <div className="px-5 pt-6 pb-5 border-b border-border">
-        <div className="flex items-center justify-between mb-1.5">
-          <Image src="/vevi-logo.svg" alt="Vevi" width={92} height={25} priority />
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5" title={`Backend connection: ${meta.label}`}>
-              <span className="relative flex h-1.5 w-1.5">
-                {meta.ping && (
-                  <span className={cn('absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping', meta.dot)} />
-                )}
-                <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', meta.dot)} />
-              </span>
-              <span className={cn('text-[9px] font-mono font-bold tracking-wider', meta.color)}>{meta.label}</span>
-            </span>
-            {showClose && (
-              <button onClick={onClose} aria-label="Close menu"
-                className="p-1 text-muted hover:text-text active:scale-95 transition-transform">
-                <X size={16} />
-              </button>
-            )}
+      {/* Brand. The same horizon the sign-in screen opens with, so arriving inside
+          the app is a continuation rather than a different product. The light does
+          NOT re-run here: it is an arrival gesture, and the sidebar persists across
+          every navigation — an animation that replays on each route change stops
+          being a welcome and becomes a tic. */}
+      <div className="relative overflow-hidden border-b border-border bg-float">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-full"
+          style={{
+            width: 260, height: 260, top: '-58%',
+            background: 'radial-gradient(circle, rgba(62,207,142,.22), rgba(62,207,142,.06) 46%, transparent 70%)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: 'linear-gradient(90deg,transparent,#3ECF8E 26%,#3ECF8E 74%,transparent)' }}
+        />
+        <div className="relative flex flex-col items-center gap-2 pt-6 pb-5">
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center shadow-[0_0_0_1px_rgba(62,207,142,.28),0_10px_26px_-10px_rgba(62,207,142,.45)]"
+            style={{ background: 'radial-gradient(circle at 38% 30%, #46A375, #2C6B4C 72%)' }}
+          >
+            <VeviWordmark className="w-[22px] h-auto" />
           </div>
+          <p className="font-sans text-[8.5px] font-semibold uppercase tracking-[.2em] text-white/85">
+            Algorithmic Trading System
+          </p>
         </div>
-        <p className="lbl mb-4">Algorithmic Trading System</p>
 
-        {/* User identity */}
-        <div className="border border-border px-3 py-2.5 flex items-center gap-2.5">
+        {/* Connection state sits on the horizon, where the eye already is. */}
+        <div className="relative flex items-center justify-between px-4 pb-3">
+          <span className="flex items-center gap-1.5" title={`Backend connection: ${meta.label}`}>
+            <span className="relative flex h-1.5 w-1.5">
+              {meta.ping && (
+                <span className={cn('absolute inline-flex h-full w-full rounded-full opacity-60 animate-ping', meta.dot)} />
+              )}
+              <span className={cn('relative inline-flex h-1.5 w-1.5 rounded-full', meta.dot)} />
+            </span>
+            <span className={cn('text-[9px] font-mono font-bold tracking-wider', meta.color)}>{meta.label}</span>
+          </span>
+          {showClose && (
+            <button onClick={onClose} aria-label="Close menu"
+              className="p-1 text-muted hover:text-text active:scale-95 transition-transform">
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* User identity */}
+      <div className="px-3 py-3 border-b border-border">
+        <div className="border border-border rounded-md px-3 py-2.5 flex items-center gap-2.5 bg-surface lit">
           <div className="w-6 h-6 border border-accent/35 flex items-center justify-center shrink-0">
             <span className="text-[11px] font-mono font-bold text-accent">{initial}</span>
           </div>

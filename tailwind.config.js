@@ -13,41 +13,50 @@ module.exports = {
       },
       colors: {
         // Ground. A terminal is read for hours in a dark room — the scene picks
-        // the theme, not the category.
-        bg:        '#05060A',
-        surface:   '#090B10',
-        elevated:  '#0D1016',
-        float:     '#12161D',
+        // the theme, not the category. Lifted slightly off pure black and warmed a
+        // touch: absolute #000 flattens every surface above it.
+        bg:        '#0A0B0D',
+        surface:   '#111214',
+        elevated:  '#17191C',
+        float:     '#1D2024',
 
         // Hairlines carry the entire structure in place of cards, so they have to
         // be genuinely visible rather than a suggestion.
-        border:      '#1B212B',
-        'border-soft': '#12171F',
-        'border-lit':  '#2A323F',
+        border:      '#242629',
+        'border-soft': '#1A1C1F',
+        'border-lit':  '#34383D',
 
-        green:     '#3DDC84',
-        red:       '#FF5C6C',
+        // Desaturated toward a refined mint. Full-neon #00F5A0 is what made the
+        // surface read as a template; a controlled green reads as engineered.
+        green:     '#3ECF8E',
+        red:       '#F8536B',
         warn:      '#F5B93B',
-        accent:    '#00F5A0',
-        'accent-dim': '#00A870',
+        accent:    '#3ECF8E',
+        'accent-dim': '#2A9D6B',
+        'accent-lit': '#4FE3A0',
 
         // 4.5:1 on --bg at body size. Previously #5C6675, which failed.
         muted:     '#6B7788',
         secondary: '#98A3B3',
         text:      '#E8EDF2',
       },
-      // A terminal has no rounded boxes. Keeping a token named `lg` avoids
-      // breaking the 14 routes that reference it; it simply resolves to a corner
-      // sharp enough to read as an instrument.
-      borderRadius: { none: '0', sm: '0', md: '0', lg: '2px', xl: '2px', '2xl': '2px', full: '9999px' },
+      // STRUCTURE stays square — the hairline grid dividing regions has no corners.
+      // CONTROLS get a small radius, because a 0-radius button reads as a 1995
+      // terminal rather than a modern instrument. That distinction is the whole
+      // difference between "dense" and "dated".
+      borderRadius: { none: '0', sm: '4px', md: '6px', lg: '6px', xl: '8px', '2xl': '8px', full: '9999px' },
       boxShadow: {
         // Depth carries an offset and a blur. A zero-offset coloured halo is
         // decoration, and this world does not use one.
         sm: '0 1px 2px rgba(0,0,0,.5)',
         md: '0 6px 16px -8px rgba(0,0,0,.7)',
         lg: '0 18px 40px -22px rgba(0,0,0,.85)',
-        rim: 'none',
-        glow: 'none',
+        // A 1px inner highlight along the top edge. This is most of what separates
+        // a considered control from a flat rectangle, and it costs nothing.
+        rim: 'inset 0 1px 0 0 rgba(255,255,255,.06)',
+        'rim-lg': 'inset 0 1px 0 0 rgba(255,255,255,.07), 0 8px 24px -12px rgba(0,0,0,.8)',
+        // Diffuse and offset, never a zero-offset ring.
+        glow: '0 4px 22px -6px rgba(62,207,142,.42)',
       },
       fontSize: {
         '2xs': ['10px', { lineHeight: '14px', letterSpacing: '.09em' }],

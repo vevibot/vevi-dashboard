@@ -8,6 +8,7 @@ import { EquityChart }   from '@/components/charts/EquityChart';
 import { DailyPnlBars }  from '@/components/charts/DailyPnlBars';
 import { TradingDataPanel }  from '@/components/TradingDataPanel';
 import { TrendingUp, Layers, Calendar, Wallet } from 'lucide-react';
+import { Spotlight } from '@/components/Spotlight';
 
 export default function MemberDashboard() {
   const [data, setData]         = useState<AccountSnapshot | null>(null);
@@ -56,7 +57,7 @@ export default function MemberDashboard() {
     <div>
       {/* ── Status rail. One continuous line of figures divided by hairlines,
              the way a terminal presents state — not four boxes in a grid. ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 border-b border-border">
+      <Spotlight className="grid grid-cols-2 md:grid-cols-4 border-b border-border bg-surface lit">
         <div className="border-r border-border">
           <MetricCard
             label="Equity"
@@ -88,7 +89,7 @@ export default function MemberDashboard() {
             sub={`${closedTrades.length} closed`}
           />
         </div>
-      </div>
+      </Spotlight>
 
       {/* ── Account line ── */}
       <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-border flex-wrap">
@@ -104,7 +105,7 @@ export default function MemberDashboard() {
       </div>
 
       {/* ── Charts. Divided regions, never boxed. ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 border-b border-border">
+      <Spotlight className="grid grid-cols-1 lg:grid-cols-3 border-b border-border">
         <div className="lg:col-span-2 lg:border-r lg:border-border px-4 py-4">
           <div className="flex items-baseline justify-between mb-3">
             <span className="lbl">Equity curve</span>
@@ -123,7 +124,7 @@ export default function MemberDashboard() {
           </div>
           <DailyPnlBars trades={trades} />
         </div>
-      </div>
+      </Spotlight>
 
       {/* ── Open positions ── */}
       <div className="border-b border-border">
@@ -135,7 +136,7 @@ export default function MemberDashboard() {
         {data.open_positions.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {data.open_positions.map((pos) => (
-              <div key={pos.symbol} className="border-r border-b border-border">
+              <div key={pos.symbol} className="border-r border-b border-border row-hover">
                 <PositionCard position={pos} />
               </div>
             ))}

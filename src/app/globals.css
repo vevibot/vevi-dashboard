@@ -5,18 +5,18 @@
 @tailwind utilities;
 
 :root {
-  --bg:          #05060A;
-  --surface:     #090B10;
-  --elevated:    #0D1016;
-  --float:       #12161D;
-  --border:      #1B212B;
-  --border-soft: #12171F;
-  --border-lit:  #2A323F;
+  --bg:          #0A0B0D;
+  --surface:     #111214;
+  --elevated:    #17191C;
+  --float:       #1D2024;
+  --border:      #242629;
+  --border-soft: #1A1C1F;
+  --border-lit:  #34383D;
 
-  --green:  #3DDC84;
-  --red:    #FF5C6C;
+  --green:  #3ECF8E;
+  --red:    #F8536B;
   --warn:   #F5B93B;
-  --accent: #00F5A0;
+  --accent: #3ECF8E;
 
   --muted:     #6B7788;
   --secondary: #98A3B3;
@@ -98,8 +98,38 @@ input:-webkit-autofill:focus {
 /* A value that just changed announces itself, then gets out of the way. */
 .mark-up   { animation: markUp .9s var(--ease-out); }
 .mark-down { animation: markDown .9s var(--ease-out); }
-@keyframes markUp   { 0% { background: rgba(61,220,132,.26); } 100% { background: transparent; } }
-@keyframes markDown { 0% { background: rgba(255,92,108,.26); } 100% { background: transparent; } }
+@keyframes markUp   { 0% { background: rgba(62,207,142,.24); } 100% { background: transparent; } }
+@keyframes markDown { 0% { background: rgba(248,83,107,.24); } 100% { background: transparent; } }
+
+/* ── Surfaces that catch light ─────────────────────────────────────────────
+   A 1px highlight along the top edge. The single cheapest thing that makes a
+   dark panel read as a physical surface rather than a filled rectangle. */
+.lit { box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, .06); }
+
+/* A soft light that tracks the pointer across a region. Driven by --mx/--my set
+   in JS; with no pointer it simply never appears, so it degrades to nothing. */
+.spot { position: relative; isolation: isolate; }
+.spot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--ease-out);
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(62, 207, 142, .07), transparent 62%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .spot:hover::after { opacity: 1; }
+}
+
+/* Rows respond to the pointer without moving — a terminal row that jumps on
+   hover is noise, but one that lights is orientation. */
+@media (hover: hover) and (pointer: fine) {
+  .row-hover { transition: background-color 130ms var(--ease-out); }
+  .row-hover:hover { background-color: rgba(255, 255, 255, .022); }
+}
 
 .pressable { transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
 .pressable:active { background-color: rgba(255,255,255,.05); }
@@ -107,10 +137,27 @@ input:-webkit-autofill:focus {
 @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 .animate-pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
 
+/* Inputs: a lit face, an accent focus ring that grows rather than blinks. */
+.field {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, .04);
+  color: var(--text);
+  transition: border-color 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
+}
+.field::placeholder { color: var(--muted); }
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.04), 0 0 0 3px rgba(62, 207, 142, .14);
+}
+
 /* Reduced motion keeps the mark — it is information, not decoration — and drops
    everything positional. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-pulse-slow, .animate-scanline { animation: none; }
+  .animate-pulse-slow { animation: none; }
   .mark-up, .mark-down { animation-duration: .4s; }
+  .spot::after { display: none; }
   *, *::before, *::after { transition-duration: 100ms !important; }
 }

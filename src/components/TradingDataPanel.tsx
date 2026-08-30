@@ -1,4 +1,5 @@
 'use client';
+import { Empty as SharedEmpty } from '@/components/ui/Empty';
 import { useState, useCallback } from 'react';
 import { X, RefreshCw, AlertTriangle, Download } from 'lucide-react';
 import {
@@ -485,7 +486,5 @@ function TxTable({ rows, loaded }: { rows: ExTx[]; loaded: boolean }) {
 
 
 function Empty({ text }: { text: string }) {
-  return (
-    <div className="flex items-center justify-center h-24 text-muted text-xs font-sans">{text}</div>
-  );
+  return <SharedEmpty compact title={text} />;
 }

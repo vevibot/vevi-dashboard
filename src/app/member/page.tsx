@@ -9,6 +9,7 @@ import { DailyPnlBars }  from '@/components/charts/DailyPnlBars';
 import { TradingDataPanel }  from '@/components/TradingDataPanel';
 import { TrendingUp, Layers, Calendar, Wallet } from 'lucide-react';
 import { Spotlight } from '@/components/Spotlight';
+import { Empty } from '@/components/ui/Empty';
 
 export default function MemberDashboard() {
   const [data, setData]         = useState<AccountSnapshot | null>(null);
@@ -160,12 +161,11 @@ export default function MemberDashboard() {
             ))}
           </div>
         ) : (
-          <div className="px-4 py-10 text-center">
-            <p className="text-secondary text-sm">No open positions.</p>
-            <p className="text-muted text-xs mt-1">
-              Automated execution is paused during the rebuild — trades arrive by manual broadcast.
-            </p>
-          </div>
+          <Empty
+            waiting
+            title="No open positions"
+            detail="Automated execution is paused during the rebuild — trades arrive by manual broadcast."
+          />
         )}
       </div>
 

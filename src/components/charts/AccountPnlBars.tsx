@@ -26,12 +26,12 @@ export function AccountPnlBars({ accounts }: Props) {
       <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
         <XAxis
           dataKey="name"
-          tick={{ fill: '#8A8A8A', fontSize: 11 }}
+          tick={{ fill: '#6B7788', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: '#8A8A8A', fontSize: 10 }}
+          tick={{ fill: '#6B7788', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) => `$${v}`}
@@ -41,12 +41,12 @@ export function AccountPnlBars({ accounts }: Props) {
         <Tooltip
           contentStyle={{ background: '#0A0A0A', border: '1px solid #1E1E1E', borderRadius: 8, fontSize: 12, color: '#FFFFFF' }}
           formatter={(v: number) => [`$${v.toFixed(2)}`, "Today's P&L"]}
-          labelStyle={{ color: '#8A8A8A' }}
+          labelStyle={{ color: '#6B7788' }}
           cursor={{ fill: '#141414' }}
         />
         <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={40}>
           {data.map((entry, i) => (
-            <Cell key={i} fill={entry.pnl >= 0 ? '#00FF41' : '#FF3131'} fillOpacity={0.8} />
+            <Cell key={i} fill={entry.pnl >= 0 ? '#3ECF8E' : '#F8536B'} fillOpacity={0.8} />
           ))}
         </Bar>
       </BarChart>

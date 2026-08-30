@@ -63,12 +63,12 @@ export function TradeChart({ binanceSym, interval, range, trades, selectedId, on
       const buy = t.side === 'buy';
       return {
         time: snap(t.openTime), position: buy ? 'belowBar' : 'aboveBar',
-        color: buy ? '#00FF41' : '#FF3131', shape: buy ? 'arrowUp' : 'arrowDown',
+        color: buy ? '#3ECF8E' : '#F8536B', shape: buy ? 'arrowUp' : 'arrowDown',
         text: `${buy ? 'BUY' : 'SELL'} ${t.size ?? ''} @ ${t.entry}`,
       };
     });
     if (sel && sel.closeTime) markers.push({
-      time: snap(sel.closeTime), position: 'inBar', color: '#8A8A8A',
+      time: snap(sel.closeTime), position: 'inBar', color: '#6B7788',
       shape: 'circle', text: `EXIT ${sel.exit ?? ''}`,
     });
     markers.sort((a, b) => (a.time as number) - (b.time as number));
@@ -83,10 +83,10 @@ export function TradeChart({ binanceSym, interval, range, trades, selectedId, on
           axisLabelVisible: true, title,
         }));
       };
-      L(sel.entry, '#B0B0B0', 'ENTRY', true);   // neutral reference
-      L(sel.sl, '#FF3131', 'SL');               // risk → red
+      L(sel.entry, '#98A3B3', 'ENTRY', true);   // neutral reference
+      L(sel.sl, '#F8536B', 'SL');               // risk → red
       L(sel.tp, '#4DA3FF', 'TP');               // target → accent
-      L(sel.exit, '#8A8A8A', 'EXIT');           // neutral
+      L(sel.exit, '#6B7788', 'EXIT');           // neutral
     }
   }
 
@@ -134,7 +134,7 @@ export function TradeChart({ binanceSym, interval, range, trades, selectedId, on
     const el = elRef.current; if (!el) return;
     const chart = createChart(el, {
       autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: '#000000' }, textColor: '#8A8A8A',
+      layout: { background: { type: ColorType.Solid, color: '#0A0B0D' }, textColor: '#6B7788',
         fontSize: 11, fontFamily: 'Fira Code, monospace' },
       grid: { vertLines: { color: '#1E1E1E' }, horzLines: { color: '#1E1E1E' } },
       rightPriceScale: { borderColor: '#1E1E1E' },
@@ -144,7 +144,7 @@ export function TradeChart({ binanceSym, interval, range, trades, selectedId, on
         horzLine: { color: 'rgba(138,138,138,.45)', labelBackgroundColor: '#333333' } },
     });
     const series = chart.addCandlestickSeries({
-      upColor: '#00FF41', downColor: '#FF3131', wickUpColor: '#00FF41', wickDownColor: '#FF3131',
+      upColor: '#3ECF8E', downColor: '#F8536B', wickUpColor: '#3ECF8E', wickDownColor: '#F8536B',
       borderVisible: false,
     });
     chartRef.current = chart; seriesRef.current = series;

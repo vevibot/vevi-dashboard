@@ -4,6 +4,7 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import { Trade } from '@/lib/api';
+import { EmptyChart } from '@/components/ui/Empty';
 
 interface Props { trades: Trade[]; }
 
@@ -22,15 +23,12 @@ export function EquityChart({ trades }: Props) {
   });
 
   if (data.length === 0) {
-    return (
-      <div className="h-44 flex items-center justify-center text-muted text-sm font-sans">
-        No closed trades yet
-      </div>
-    );
+    // The instrument exists before the first measurement: frame, grid, flat trace.
+    return <EmptyChart height={176} label="Awaiting first closed trade" />;
   }
 
   const latest = data[data.length - 1].pnl;
-  const color  = latest >= 0 ? '#00FF41' : '#FF3131';
+  const color  = latest >= 0 ? '#3ECF8E' : '#F8536B';
 
   return (
     <ResponsiveContainer width="100%" height={176}>
@@ -43,13 +41,13 @@ export function EquityChart({ trades }: Props) {
         </defs>
         <XAxis
           dataKey="label"
-          tick={{ fill: '#8A8A8A', fontSize: 10 }}
+          tick={{ fill: '#6B7788', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fill: '#8A8A8A', fontSize: 10 }}
+          tick={{ fill: '#6B7788', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v: number) => `$${v}`}
@@ -59,7 +57,7 @@ export function EquityChart({ trades }: Props) {
         <Tooltip
           contentStyle={{ background: '#0A0A0A', border: '1px solid #1E1E1E', borderRadius: 8, fontSize: 12, color: '#FFFFFF' }}
           formatter={(v: number) => [`$${v.toFixed(2)}`, 'Cumulative P&L']}
-          labelStyle={{ color: '#8A8A8A' }}
+          labelStyle={{ color: '#6B7788' }}
           cursor={{ stroke: '#1E1E1E', strokeWidth: 1 }}
         />
         <Area

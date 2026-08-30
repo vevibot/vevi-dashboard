@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMyDashboard, getMyTrades, AccountSnapshot, Trade, OpenPosition } from '@/lib/api';
+import { Empty } from '@/components/ui/Empty';
 import { fmtPnl, fmtPrice, fmtDate } from '@/lib/utils';
 import { Badge }       from '@/components/ui/Badge';
 import { EquityChart } from '@/components/charts/EquityChart';
@@ -104,9 +105,12 @@ export default function TradesPage() {
 function LiveTab({ positions }: { positions: OpenPosition[] }) {
   if (positions.length === 0) {
     return (
-      <div className="bg-surface border border-border rounded-xl p-12 text-center">
-        <ListOrdered size={28} className="text-muted mx-auto mb-2" />
-        <p className="text-muted text-sm font-sans">No open positions right now.</p>
+      <div className="border-b border-border">
+        <Empty
+          waiting
+          title="No open positions"
+          detail="Trades arrive by manual broadcast while automated execution is paused."
+        />
       </div>
     );
   }
@@ -280,11 +284,12 @@ function HistoryTab({ trades, allTrades, account }: {
             })}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-12 text-center">
-                  <ListOrdered size={28} className="text-muted mx-auto mb-2" />
-                  <p className="text-muted text-sm">
-                    {filtersActive ? 'No trades match the current filters.' : 'No closed trades yet.'}
-                  </p>
+                <td colSpan={7}>
+                  {filtersActive ? (
+                    <Empty compact title="No trades match these filters" detail="Clear a filter to widen the result." />
+                  ) : (
+                    <Empty compact waiting title="No closed trades yet" detail="Your first closed trade starts the record." />
+                  )}
                 </td>
               </tr>
             )}
